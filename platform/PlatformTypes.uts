@@ -1,0 +1,48 @@
+/**
+ * 平台 adapter 共享类型。
+ * 录音/播放/权限/文件的跨端语义在此统一定义；各端实现不得改变字段含义。
+ * 录音格式如实记录实际编码/容器，不假定全端 M4A（DocumentationAudit F03）。
+ */
+
+/** 客户端录音状态机（技术设计第4节本地练习状态的录音子集）。 */
+export type RecorderState =
+  "idle" | "recording" | "interrupted" | "recorded" | "error";
+
+export type RecorderStartOptions = {
+  /** 单题最大时长毫秒，为引导预算上限，不是录满门槛。 */
+  maxDurationMs: number;
+  sampleRate: number;
+  channels: number;
+};
+
+export type RecordingResult = {
+  /** 原始临时路径；uni 临时录音必须立即转存，不能只保存此路径。 */
+  tempFilePath: string;
+  /** 实际编码/容器标识（由端实际产出填写，如 aac/mp3/webm）。 */
+  format: string;
+  durationMs: number;
+  sizeBytes: number;
+};
+
+export type RecorderError = {
+  code: string;
+  message: string;
+  /** 权限拒绝/磁盘不足/来电中断等可恢复原因须可区分。 */
+  recoverable: boolean;
+};
+
+/** 播放状态；播放时长来自真实音频会话，不假波形。 */
+export type PlayerState = "idle" | "loading" | "playing" | "paused" | "ended" | "error";
+
+export type PermissionStatus = "granted" | "denied" | "undetermined";
+
+/** 持久化后的文件引用；数据库/草稿只保存引用，音频本体独立存放。 */
+export type StoredFileRef = {
+  /** 持久目录内的稳定标识（不含机器绝对路径进契约）。 */
+  localId: string;
+  persistedPath: string;
+  originTempPath: string;
+  sizeBytes: number;
+  sha256: string;
+  createdAt: string;
+};

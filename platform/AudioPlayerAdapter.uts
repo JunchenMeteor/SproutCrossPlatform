@@ -1,0 +1,86 @@
+/**
+ * 音频播放 adapter：封装 InnerAudioContext，用于示范音频与录音回放。
+ * 时长来自真实会话（onCanplay/onTimeUpdate），不假波形；后台或中断时停止
+ * 视觉计时。四端可用性以实测为准，Web 端行为单独验证。
+ */
+import { PlayerState } from "./PlatformTypes";
+
+export type PlayerStateCallback = (state: PlayerState) => void;
+
+export interface AudioPlayerAdapter {
+  /** src 为本地持久路径或经授权的短效 URL；不拼未授权地址。 */
+  play(src: string): void;
+  pause(): void;
+  stop(): void;
+  getState(): PlayerState;
+  getDurationMs(): number;
+  onStateChange(callback: PlayerStateCallback): void;
+}
+
+export function createAudioPlayerAdapter(): AudioPlayerAdapter {
+  return new UniAudioPlayerAdapter();
+}
+
+class UniAudioPlayerAdapter implements AudioPlayerAdapter {
+  private context: InnerAudioContext | null = null;
+  private state: PlayerState = "idle";
+  private durationMs: number = 0;
+  private stateCallback: PlayerStateCallback | null = null;
+
+  play(src: string): void {
+    if (this.context == null) {
+      this.context = uni.createInnerAudioContext();
+      this.bindEvents();
+    }
+    this.setState("loading");
+    const context = this.context;
+    if (context != null) {
+      context.src = src;
+      context.play();
+    }
+  }
+
+  private bindEvents(): void {
+    const context = this.context;
+    if (context == null) {
+      return;
+    }
+    context.onPlay(() => this.setState("playing"));
+    context.onPause(() => this.setState("paused"));
+    context.onStop(() => this.setState("idle"));
+    context.onEnded(() => this.setState("ended"));
+    context.onError(() => this.setState("error"));
+    context.onCanplay(() => {
+      const seconds = context?.duration ?? 0;
+      this.durationMs = Math.round(seconds * 1000);
+    });
+  }
+
+  pause(): void {
+    this.context?.pause();
+  }
+
+  stop(): void {
+    this.context?.stop();
+  }
+
+  getState(): PlayerState {
+    return this.state;
+  }
+
+  getDurationMs(): number {
+    return this.durationMs;
+  }
+
+  private setState(next: PlayerState): void {
+    this.state = next;
+    const callback = this.stateCallback;
+    if (callback != null) {
+      callback(next);
+    }
+  }
+
+  onStateChange(callback: PlayerStateCallback): void {
+    this.stateCallback = callback;
+  }
+}

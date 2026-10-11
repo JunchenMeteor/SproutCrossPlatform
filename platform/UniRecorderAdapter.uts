@@ -1,0 +1,133 @@
+/**
+ * 内置 RecorderManager 录音实现，适用微信小程序 / Android / 原生 HarmonyOS NEXT
+ * （H5 除外）。各端实际编码/容器、采样率支持与中断回调可用性须逐端实测；
+ * uni 临时录音路径由 FileAdapter 立即转存，本类不持久化。
+ * 编译与行为尚未经 HBuilderX 验证，API 细节以固定版本实测为准。
+ */
+import {
+  RecorderAdapter,
+  RecorderErrorCallback,
+  RecorderEventCallback,
+  RecorderResultCallback,
+} from "./RecorderAdapter";
+import {
+  RecorderError,
+  RecorderStartOptions,
+  RecorderState,
+  RecordingResult,
+} from "./PlatformTypes";
+
+export class UniRecorderAdapter implements RecorderAdapter {
+  private state: RecorderState = "idle";
+  private startedAtMs: number = 0;
+  private stateCallback: RecorderEventCallback | null = null;
+  private resultCallback: RecorderResultCallback | null = null;
+  private errorCallback: RecorderErrorCallback | null = null;
+  private manager: RecorderManager | null = null;
+
+  constructor() {
+    this.manager = uni.getRecorderManager();
+    this.bindEvents();
+  }
+
+  private bindEvents(): void {
+    const manager = this.manager;
+    if (manager == null) {
+      return;
+    }
+    manager.onStop((res) => {
+      const durationMs = res.duration > 0
+        ? Math.round(res.duration)
+        : Date.now() - this.startedAtMs;
+      this.setState("recorded");
+      const callback = this.resultCallback;
+      if (callback != null) {
+        callback({
+          tempFilePath: res.tempFilePath,
+          format: this.detectFormat(res.tempFilePath),
+          durationMs: durationMs,
+          sizeBytes: 0,
+        } as RecordingResult);
+      }
+    });
+    manager.onError((res) => {
+      this.setState("error");
+      this.emitError("RECORD_FAILED", res.errMsg, true);
+    });
+    manager.onInterruptionBegin(() => {
+      /* 来电等中断：进入 interrupted，片段须由孩子确认重录，不自动提交。 */
+      this.setState("interrupted");
+    });
+  }
+
+  private detectFormat(tempFilePath: string): string {
+    const dot = tempFilePath.lastIndexOf(".");
+    if (dot >= 0) {
+      return tempFilePath.substring(dot + 1).toLowerCase();
+    }
+    return "unknown";
+  }
+
+  private emitError(code: string, message: string, recoverable: boolean): void {
+    const callback = this.errorCallback;
+    if (callback != null) {
+      callback({ code: code, message: message, recoverable: recoverable } as RecorderError);
+    }
+  }
+
+  start(options: RecorderStartOptions): void {
+    const manager = this.manager;
+    if (manager == null) {
+      this.emitError("RECORDER_UNAVAILABLE", "RecorderManager 不可用", false);
+      return;
+    }
+    if (this.state === "recording") {
+      return;
+    }
+    this.startedAtMs = Date.now();
+    manager.start({
+      duration: options.maxDurationMs,
+      sampleRate: options.sampleRate,
+      numberOfChannels: options.channels,
+    } as RecorderManagerStartOptions);
+    this.setState("recording");
+  }
+
+  stop(): void {
+    if (this.state !== "recording") {
+      return;
+    }
+    this.manager?.stop();
+  }
+
+  cancel(): void {
+    if (this.state === "recording") {
+      this.manager?.stop();
+    }
+    this.setState("idle");
+  }
+
+  getState(): RecorderState {
+    return this.state;
+  }
+
+  private setState(next: RecorderState): void {
+    this.state = next;
+    const callback = this.stateCallback;
+    if (callback != null) {
+      callback(next);
+    }
+  }
+
+  onStateChange(callback: RecorderEventCallback): void {
+    this.stateCallback = callback;
+  }
+
+  onResult(callback: RecorderResultCallback): void {
+    this.resultCallback = callback;
+  }
+
+  onError(callback: RecorderErrorCallback): void {
+    this.errorCallback = callback;
+  }
+}

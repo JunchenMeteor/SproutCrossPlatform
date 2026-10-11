@@ -1,0 +1,30 @@
+/**
+ * 麦克风权限 adapter。权限申请集中在本文件，页面不直接调用平台权限 API。
+ * 各端权限模型不同（小程序 scope.record、Android 运行时权限、HarmonyOS 权限、
+ * Web getUserMedia 提示），实际行为逐端验证；拒绝时向用户解释原因并保留进度。
+ */
+import { PermissionStatus } from "./PlatformTypes";
+
+/** 申请录音权限；Web 的授权提示在首次 getUserMedia 时由浏览器触发。 */
+export function requestRecordPermission(): Promise<PermissionStatus> {
+  return new Promise<PermissionStatus>((resolve) => {
+    // #ifdef MP-WEIXIN
+    uni.authorize({
+      scope: "scope.record",
+      success: () => resolve("granted"),
+      fail: () => resolve("denied"),
+    });
+    // #endif
+    // #ifdef APP
+    uni.requestPermission({
+      permission: "android.permission.RECORD_AUDIO",
+      success: () => resolve("granted"),
+      fail: () => resolve("denied"),
+    });
+    // #endif
+    // #ifdef H5
+    /* 浏览器权限在 WebRecorderAdapter 首次录音时触发；此处报告 undetermined。 */
+    resolve("undetermined");
+    // #endif
+  });
+}

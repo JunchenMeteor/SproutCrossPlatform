@@ -15,7 +15,7 @@
 | 主题系统（十套） | 源码完成（未编译） | theme/ThemeTypes.uts + ThemeTokens.uts + ThemeStore.uts；99 个色值字面量与项目规范第6节逐一核对一致（脚本比对，无多出/缺失）；UI 实际渲染未验证 |
 | 共用组件 | 未开始 | button/dialog/toast/form/list/card/recorder/feedback/calendar/reward |
 | 网络层 | 未开始 | EC-API-0.1 + ClientContext headers；接口未冻结，不自行定义远端接口 |
-| 平台 adapter | 未开始 | 录音/播放/文件/权限/登录/主题存储 |
+| 平台 adapter | 源码完成（未编译） | platform/：RecorderAdapter 契约+工厂、UniRecorderAdapter（小程序/Android/鸿蒙）、WebRecorderAdapter（MediaRecorder 单独实现）、PermissionAdapter、FileAdapter（临时录音转存）、AudioPlayerAdapter；均标注逐端实测要求 |
 | 四端验证 | 未开始 | 见第3节平台矩阵 |
 
 ## 2. 工具链现状与限制

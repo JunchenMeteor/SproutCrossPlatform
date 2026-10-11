@@ -1,0 +1,48 @@
+/**
+ * 录音平台 adapter 契约与工厂。
+ * 内置 RecorderManager 不支持 Web（官方兼容矩阵），Web 由 WebRecorderAdapter
+ * 单独实现；不写四端通用假实现。页面只依赖本接口，平台条件集中在工厂。
+ */
+import {
+  RecorderError,
+  RecorderStartOptions,
+  RecorderState,
+  RecordingResult,
+} from "./PlatformTypes";
+import { UniRecorderAdapter } from "./UniRecorderAdapter";
+import { WebRecorderAdapter } from "./WebRecorderAdapter";
+
+export type RecorderEventCallback = (state: RecorderState) => void;
+
+export type RecorderResultCallback = (result: RecordingResult) => void;
+
+export type RecorderErrorCallback = (error: RecorderError) => void;
+
+export interface RecorderAdapter {
+  /** 申请权限由 PermissionAdapter 先行；start 不隐式处理权限。 */
+  start(options: RecorderStartOptions): void;
+
+  /** 正常结束：产出 RecordingResult（经 onResult）。中断片段不自动提交。 */
+  stop(): void;
+
+  /** 放弃当前录音，丢弃临时文件。 */
+  cancel(): void;
+
+  getState(): RecorderState;
+
+  onStateChange(callback: RecorderEventCallback): void;
+
+  onResult(callback: RecorderResultCallback): void;
+
+  onError(callback: RecorderErrorCallback): void;
+}
+
+/** 按编译平台选择实现；H5 与内置 RecorderManager 端分离。 */
+export function createRecorderAdapter(): RecorderAdapter {
+  // #ifdef H5
+  return new WebRecorderAdapter();
+  // #endif
+  // #ifndef H5
+  return new UniRecorderAdapter();
+  // #endif
+}

@@ -1,0 +1,73 @@
+/**
+ * 文件持久化 adapter：把录音从临时位置转存到持久目录并生成稳定引用。
+ * uni 临时录音路径会被系统回收，必须立即转存（技术设计第2节）；Web 按浏览器
+ * quota/持久存储能力处理并提示未同步风险，不保证清缓存后仍可恢复（F05）。
+ * sha256 计算能力各端不一：小程序 getFileInfo 支持 digest，其余端待实测，
+ * 未计算出时 sha256 为空串并在上传前由服务端权威校验。
+ */
+import { RecordingResult, StoredFileRef } from "./PlatformTypes";
+
+export interface FileAdapter {
+  persistRecording(result: RecordingResult): Promise<StoredFileRef>;
+  remove(localId: string): Promise<void>;
+}
+
+function newLocalId(): string {
+  return "rec-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+}
+
+export function createFileAdapter(): FileAdapter {
+  // #ifdef H5
+  return new WebFileAdapter();
+  // #endif
+  // #ifndef H5
+  return new UniFileAdapter();
+  // #endif
+}
+
+class UniFileAdapter implements FileAdapter {
+  persistRecording(result: RecordingResult): Promise<StoredFileRef> {
+    return new Promise<StoredFileRef>((resolve, reject) => {
+      uni.saveFile({
+        tempFilePath: result.tempFilePath,
+        success: (res) => {
+          resolve({
+            localId: newLocalId(),
+            persistedPath: res.savedFilePath,
+            originTempPath: result.tempFilePath,
+            sizeBytes: result.sizeBytes,
+            sha256: "",
+            createdAt: new Date().toISOString(),
+          } as StoredFileRef);
+        },
+        fail: (err) => reject(err),
+      });
+    });
+  }
+
+  remove(localId: string): Promise<void> {
+    /* 按 localId 定位持久路径的索引在 storage/ 层维护；删除文件本体待
+       uni.removeSavedFile 可用性逐端核对后实现。 */
+    return Promise.resolve();
+  }
+}
+
+class WebFileAdapter implements FileAdapter {
+  persistRecording(result: RecordingResult): Promise<StoredFileRef> {
+    /* Web 录音产物为 Blob（tempFilePath 为空）。持久化须用 IndexedDB/Cache
+       Storage 并核对 quota 与系统清理行为；该实现未验证前不假装已持久化，
+       上层须向用户提示未同步风险。 */
+    return Promise.resolve({
+      localId: newLocalId(),
+      persistedPath: "",
+      originTempPath: "",
+      sizeBytes: result.sizeBytes,
+      sha256: "",
+      createdAt: new Date().toISOString(),
+    } as StoredFileRef);
+  }
+
+  remove(localId: string): Promise<void> {
+    return Promise.resolve();
+  }
+}

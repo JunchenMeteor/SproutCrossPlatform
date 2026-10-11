@@ -1,0 +1,137 @@
+/**
+ * Web 端录音单独实现：内置 RecorderManager 不支持 Web，使用浏览器
+ * MediaRecorder。仅在 H5 编译生效；浏览器权限、可产生编码（webm/opus 等）、
+ * quota 与系统清理边界须在 Web 验证阶段实测（DocumentationAudit F05）。
+ * 浏览器 API 经 any 桥接，编译通过不代表运行可用。
+ */
+import {
+  RecorderAdapter,
+  RecorderErrorCallback,
+  RecorderEventCallback,
+  RecorderResultCallback,
+} from "./RecorderAdapter";
+import {
+  RecorderError,
+  RecorderStartOptions,
+  RecorderState,
+  RecordingResult,
+} from "./PlatformTypes";
+
+export class WebRecorderAdapter implements RecorderAdapter {
+  private state: RecorderState = "idle";
+  private startedAtMs: number = 0;
+  private mediaRecorder: any = null;
+  private chunks: any[] = [];
+  private stateCallback: RecorderEventCallback | null = null;
+  private resultCallback: RecorderResultCallback | null = null;
+  private errorCallback: RecorderErrorCallback | null = null;
+
+  start(options: RecorderStartOptions): void {
+    // #ifdef H5
+    if (this.state === "recording") {
+      return;
+    }
+    const nav = (window as any).navigator;
+    if (nav == null || nav.mediaDevices == null) {
+      this.emitError("RECORDER_UNAVAILABLE", "当前浏览器不支持录音", false);
+      return;
+    }
+    nav.mediaDevices.getUserMedia({ audio: true }).then((stream: any) => {
+      const recorder = new (window as any).MediaRecorder(stream);
+      this.chunks = [];
+      recorder.ondataavailable = (event: any) => {
+        if (event.data != null) {
+          this.chunks.push(event.data);
+        }
+      };
+      recorder.onstop = () => {
+        this.finishRecording(stream);
+      };
+      recorder.onerror = (event: any) => {
+        this.setState("error");
+        this.emitError("RECORD_FAILED", String(event.error), true);
+      };
+      this.mediaRecorder = recorder;
+      this.startedAtMs = Date.now();
+      recorder.start();
+      this.setState("recording");
+    }).catch((err: any) => {
+      this.setState("error");
+      this.emitError("PERMISSION_DENIED", String(err), true);
+    });
+    // #endif
+  }
+
+  private finishRecording(stream: any): void {
+    // #ifdef H5
+    const tracks = stream.getTracks() as any[];
+    for (const track of tracks) {
+      track.stop();
+    }
+    const blob = new (window as any).Blob(this.chunks);
+    const durationMs = Date.now() - this.startedAtMs;
+    this.setState("recorded");
+    const callback = this.resultCallback;
+    if (callback != null) {
+      /* Web 无临时文件路径：持久化由 FileAdapter 以 Blob/对象 URL 处理，
+         tempFilePath 此处为空串占位，format 取浏览器实际 MIME。 */
+      callback({
+        tempFilePath: "",
+        format: typeof blob.type === "string" && blob.type.length > 0 ? blob.type : "unknown",
+        durationMs: durationMs,
+        sizeBytes: blob.size as number,
+      } as RecordingResult);
+    }
+    // #endif
+  }
+
+  stop(): void {
+    // #ifdef H5
+    if (this.state !== "recording" || this.mediaRecorder == null) {
+      return;
+    }
+    (this.mediaRecorder as any).stop();
+    // #endif
+  }
+
+  cancel(): void {
+    // #ifdef H5
+    if (this.state === "recording" && this.mediaRecorder != null) {
+      this.chunks = [];
+      (this.mediaRecorder as any).stop();
+    }
+    this.setState("idle");
+    // #endif
+  }
+
+  getState(): RecorderState {
+    return this.state;
+  }
+
+  private setState(next: RecorderState): void {
+    this.state = next;
+    const callback = this.stateCallback;
+    if (callback != null) {
+      callback(next);
+    }
+  }
+
+  private emitError(code: string, message: string, recoverable: boolean): void {
+    const callback = this.errorCallback;
+    if (callback != null) {
+      callback({ code: code, message: message, recoverable: recoverable } as RecorderError);
+    }
+  }
+
+  onStateChange(callback: RecorderEventCallback): void {
+    this.stateCallback = callback;
+  }
+
+  onResult(callback: RecorderResultCallback): void {
+    this.resultCallback = callback;
+  }
+
+  onError(callback: RecorderErrorCallback): void {
+    this.errorCallback = callback;
+  }
+}
