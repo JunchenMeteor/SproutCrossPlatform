@@ -110,10 +110,10 @@ export default {
       createRecorderAdapter(), createFileAdapter(), drafts, queue,
       () => newUuid(), () => nowUtcIso());
     session.setOnChange(() => this.onSessionChange());
+    this.session = session;
     const plan = buildDemoPlan(localDevChildId, todayTargetDate());
     this.planConfirmed = plan.confirmed;
     session.loadPlan(plan);
-    this.session = session;
   },
   onUnload() {
     this.stopDurationTimer();
