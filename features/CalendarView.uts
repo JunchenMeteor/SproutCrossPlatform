@@ -1,0 +1,41 @@
+/**
+ * 日历视图构建：把月份、今天、已确认/补卡日期集合映射为 CalendarGrid 输入。
+ * 日期按固定 UTC+8 业务时区计算（BusinessDate），连续链/累计由服务端权威，
+ * 本模块只做网格几何与状态映射，不计算打卡规则。
+ */
+import { CalendarCellView } from "./FeatureTypes";
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** 构建某月（yyyy-MM）的 6×7 网格；completed/makeup 为服务端或本地事实日期集。 */
+export function buildMonthWeeks(monthKey: string, today: string,
+  completed: string[], makeup: string[], selected: string | null): CalendarCellView[][] {
+  const parts = monthKey.split("-");
+  const year = parseInt(parts[0]);
+  const month = parseInt(parts[1]);
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const totalDays = daysInMonth(year, month);
+  const weeks: CalendarCellView[][] = [];
+  let day = 1 - firstWeekday;
+  for (let w = 0; w < 6; w++) {
+    const row: CalendarCellView[] = [];
+    for (let d = 0; d < 7; d++) {
+      const inMonth = day >= 1 && day <= totalDays;
+      const date = inMonth ? monthKey + "-" + (day < 10 ? "0" + day : "" + day) : "";
+      row.push({
+        date: date,
+        label: inMonth ? "" + day : "",
+        inMonth: inMonth,
+        isToday: date === today,
+        selected: date === selected,
+        completed: completed.includes(date),
+        makeup: makeup.includes(date),
+      } as CalendarCellView);
+      day += 1;
+    }
+    weeks.push(row);
+  }
+  return weeks;
+}

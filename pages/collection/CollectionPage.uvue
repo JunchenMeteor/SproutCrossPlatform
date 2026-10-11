@@ -1,25 +1,73 @@
 <template>
-  <view class="page">
-    <text class="title">收藏馆</text>
-    <text class="body">已解锁坦克详情与未解锁剪影（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">坦克收藏馆</text>
+    <text class="hint" :style="hintStyle">演示内容：素材与历史型号确认前使用原创示例</text>
+    <scroll-view class="scroll" scroll-y>
+      <RewardCard
+        v-for="(item, index) in items"
+        :key="index"
+        :state="item.unlocked ? 'confirmed' : 'locked'"
+        :title="item.title"
+        :subtitle="item.subtitle"
+        :confirmed="item.unlocked"
+        :remainingDays="item.remainingDays"
+        :theme="theme"
+      />
+    </scroll-view>
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 收藏馆页（tab）。完整坦克/零件徽章/涂装展台三层级；未解锁显示剪影与
- * 下一目标。卡片含型号、年代、国家与简短工程特点；素材须许可记录，
- * 不提供武器操作内容。
+ * 收藏馆页（tab）：完整坦克/零件徽章/涂装展台三层级展示。
+ * 已解锁显示详情与“已收藏”徽章，未解锁显示剪影与下一目标天数；
+ * 素材须许可记录，演示阶段只使用原创占位文案（ProductRequirements 第5节）。
  */
+import RewardCard from "../../components/RewardCard.uvue";
+import { getThemeStore } from "../../features/AppContext";
+import { buildDemoCollection } from "../../features/DemoFixtures";
+import { CollectionItemView } from "../../features/FeatureTypes";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { RewardCard },
   data() {
-    return { title: "收藏馆" };
-  }
+    return {
+      theme: null as ResolvedTheme | null,
+      items: [] as CollectionItemView[],
+    };
+  },
+  onShow() {
+    this.theme = getThemeStore().getTheme();
+    this.items = buildDemoCollection();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    hintStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.tertiary + ";font-size:14px;margin-bottom:16px;";
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.scroll {
+  flex: 1;
+}
 </style>

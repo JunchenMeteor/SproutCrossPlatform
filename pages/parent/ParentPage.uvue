@@ -1,25 +1,82 @@
 <template>
-  <view class="page">
-    <text class="title">家长管理</text>
-    <text class="body">进度、档案、录音策略、导出恢复与删除（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">家长管理</text>
+    <AppCard :theme="theme" class="section">
+      <text :style="sectionTitleStyle">当前身份</text>
+      <text :style="bodyStyle">本机开发身份（local-dev）。登录与账号恢复方式待确定，未定前仅本机使用，不用于联调验收。</text>
+    </AppCard>
+    <AppCard :theme="theme" class="section">
+      <text :style="sectionTitleStyle">教材与进度</text>
+      <text :style="bodyStyle">清华版教材版本、上下册与当前课次待确认。确认前练习使用原创演示内容，不推进真实课程进度。</text>
+    </AppCard>
+    <AppCard :theme="theme" class="section">
+      <text :style="sectionTitleStyle">录音与数据</text>
+      <text :style="bodyStyle">录音长期保留策略由家长选择；导出备份/恢复与删除功能依赖后端接口，契约冻结后接入。备份不含任何密钥。</text>
+    </AppCard>
+    <AppButton
+      label="主题设置"
+      kind="secondary"
+      :theme="theme"
+      @action="onOpenThemeSettings"
+    />
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 家长管理页（tab）。进度查看、教材版本与当前课次确认、录音保留策略、
- * 备份导出/恢复预览、删除入口。敏感操作需家长确认；恢复旧备份为显式操作，
- * 不自动复活已删除数据。
+ * 家长管理页（tab）：进度、档案、录音策略、导出恢复与删除入口。
+ * 后端与登录未就绪前，各区块如实标注待确认/待接入，不提供伪造功能；
+ * 主题设置为当前可用的完整功能入口。
  */
+import AppButton from "../../components/AppButton.uvue";
+import AppCard from "../../components/AppCard.uvue";
+import { getThemeStore } from "../../features/AppContext";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { AppButton, AppCard },
   data() {
-    return { title: "家长管理" };
-  }
+    return { theme: null as ResolvedTheme | null };
+  },
+  onShow() {
+    this.theme = getThemeStore().getTheme();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    sectionTitleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";font-size:22px;margin-bottom:8px;";
+    },
+    bodyStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary + ";font-size:17px;";
+    },
+  },
+  methods: {
+    onOpenThemeSettings(): void {
+      uni.navigateTo({ url: "/pages/settings/ThemeSettingsPage" });
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.section {
+  margin-bottom: 16px;
+}
 </style>

@@ -33,6 +33,27 @@ export type PracticePlanView = {
   items: PracticeItemView[];
 };
 
+/** 日历单元视图：日期来源与连续链由服务端提供，客户端只映射展示。 */
+export type CalendarCellView = {
+  date: string;
+  label: string;
+  inMonth: boolean;
+  isToday: boolean;
+  selected: boolean;
+  completed: boolean;
+  makeup: boolean;
+};
+
+/** 收藏条目视图；未解锁只给剪影与下一目标天数。 */
+export type CollectionItemView = {
+  itemId: string;
+  kind: string;
+  title: string;
+  subtitle: string;
+  unlocked: boolean;
+  remainingDays: number;
+};
+
 export type SessionSnapshot = {
   state: SessionState;
   plan: PracticePlanView | null;

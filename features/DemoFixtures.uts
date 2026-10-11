@@ -3,7 +3,12 @@
  * 内容为原创小样，明确标注演示来源，不冒充清华版课本内容（产品需求第2节、
  * ProjectFacts 待确认项）。契约冻结或真实教材确认后删除或迁移到 tests/。
  */
-import { PracticeItemType, PracticeItemView, PracticePlanView } from "./FeatureTypes";
+import {
+  CollectionItemView,
+  PracticeItemType,
+  PracticeItemView,
+  PracticePlanView,
+} from "./FeatureTypes";
 
 function demoItem(itemId: string, type: PracticeItemType, prompt: string,
   referenceText: string | null, suggestedSeconds: number): PracticeItemView {
@@ -36,4 +41,22 @@ export function buildDemoPlan(childId: string, targetDate: string): PracticePlan
     confirmed: false,
     items: items,
   } as PracticePlanView;
+}
+
+/**
+ * 演示收藏条目：原创示例文案，仅验证收藏馆布局与锁定/解锁状态展示；
+ * 真实历史坦克素材与来源核对在内容阶段完成，不使用未授权图片。
+ */
+export function buildDemoCollection(): CollectionItemView[] {
+  return [
+    { itemId: "demo-tank-1", kind: "tank", title: "示例坦克一号",
+      subtitle: "演示用原创插画占位，非真实历史型号", unlocked: true,
+      remainingDays: 0 },
+    { itemId: "demo-part-1", kind: "part", title: "今日零件（示例）",
+      subtitle: "每日首次打卡获得", unlocked: true, remainingDays: 0 },
+    { itemId: "demo-tank-2", kind: "tank", title: "下一辆坦克",
+      subtitle: "累计打卡解锁", unlocked: false, remainingDays: 3 },
+    { itemId: "demo-deco-1", kind: "decoration", title: "月度涂装（示例）",
+      subtitle: "完成月度目标解锁", unlocked: false, remainingDays: 12 },
+  ] as CollectionItemView[];
 }

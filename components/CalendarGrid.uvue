@@ -21,26 +21,17 @@
  * 完成、补卡、选中、今天均有图形或文字标识，不仅颜色区分（补卡显示“补”）。
  * 日期与连续天数数据由服务端契约提供，组件不自行计算连续链。
  */
+import { CalendarCellViewView } from "../features/FeatureTypes";
 import { ResolvedTheme } from "../theme/ThemeTypes";
-
-export type CalendarCell = {
-  date: string;
-  label: string;
-  inMonth: boolean;
-  isToday: boolean;
-  selected: boolean;
-  completed: boolean;
-  makeup: boolean;
-};
 
 export default {
   props: {
-    weeks: { type: Array as PropType<CalendarCell[]>, default: [] },
+    weeks: { type: Array as PropType<CalendarCellView[]>, default: [] },
     theme: { type: Object as PropType<ResolvedTheme>, required: true },
   },
   emits: ["select"],
   methods: {
-    cellStyle(cell: CalendarCell): string {
+    cellStyle(cell: CalendarCellView): string {
       const t = this.theme as ResolvedTheme;
       if (!cell.inMonth) {
         return "background-color:transparent;border-color:transparent;";
@@ -65,7 +56,7 @@ export default {
       }
       return base;
     },
-    cellTextStyle(cell: CalendarCell): string {
+    cellTextStyle(cell: CalendarCellView): string {
       const t = this.theme as ResolvedTheme;
       if (!cell.inMonth) {
         return "color:transparent;";
@@ -85,7 +76,7 @@ export default {
       return "color:" + (this.theme as ResolvedTheme).status.info.fg
         + ";font-size:10px;";
     },
-    onSelect(cell: CalendarCell): void {
+    onSelect(cell: CalendarCellView): void {
       if (cell.inMonth) {
         this.$emit("select", cell.date);
       }

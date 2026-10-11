@@ -18,7 +18,7 @@
 | 本地存储与离线 | 源码完成（未运行） | storage/：SyncQueue（按账号隔离、稳定 UUID、重试不新建条目）、DraftStore（草稿 + 服务端已确认 Plan 离线缓存，无缓存不承诺离线打卡） |
 | 平台 adapter | 源码完成（未编译） | platform/：RecorderAdapter 契约+工厂、UniRecorderAdapter（小程序/Android/鸿蒙）、WebRecorderAdapter（MediaRecorder 单独实现）、PermissionAdapter、FileAdapter（临时录音转存）、AudioPlayerAdapter；均标注逐端实测要求 |
 | 业务用例 features/ | 源码完成（未运行） | PracticeSession（计划加载/逐题录音/草稿/完成入队，评测不是打卡前提）、SyncEngine（仅调 EC-API-0.1 已定义端点，未联调）、DemoFixtures（原创演示小样，明确标注不冒充课本） |
-| 页面组合 | 核心页已接线（未运行） | 今日三入口（新课须家长确认对话框）、练习页（RecorderPanel+PracticeSession+回放+演示标注）、完成页（离线暂存诚实提示）、主题设置页（五组×三模式，设备本地保存）；日历/收藏馆/家长/记录详情仍为骨架，待后端数据 |
+| 页面组合 | 8 页全部接线（未运行） | 今日三入口（新课须家长确认）、练习页全流程、完成页离线暂存提示、主题设置完整功能；日历（本机待确认事实+今天标识，连续链留给服务端）、收藏馆（演示层级展示）、家长管理（待接入项如实标注）、记录详情（本机草稿枚举+回放，删除说明） |
 | 四端验证 | 未开始 | 见第3节平台矩阵 |
 
 ## 2. 工具链现状与限制

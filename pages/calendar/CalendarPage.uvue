@@ -1,25 +1,112 @@
 <template>
-  <view class="page">
-    <text class="title">日历</text>
-    <text class="body">打卡日历与记录入口（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">{{ monthKey }}</text>
+    <CalendarGrid
+      :weeks="weeks"
+      :theme="theme"
+      @select="onSelect"
+    />
+    <view class="legend">
+      <text :style="legendStyle">绿底 = 已完成；蓝底 + “补” = 补卡；外圈 = 今天</text>
+    </view>
+    <text v-if="pendingCount > 0" :style="hintStyle">
+      {{ pendingCount }} 条本地记录待联网确认；连续天数与累计由服务器确认后显示
+    </text>
+    <text v-else :style="hintStyle">
+      连续天数与累计由服务器确认后显示；当前为本机演示数据
+    </text>
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 日历页（tab）。目标日期/确认时间/补卡标记来自服务端契约数据，
- * 客户端不自行计算连续天数与奖励；补卡日期保持“补”标记（图形+文字，
- * 不仅颜色区分）。
+ * 日历页（tab）：网格由 CalendarGrid 渲染，完成/补卡/今天为图形+文字标识。
+ * 服务端日历数据未联调前，只展示本机待同步事实与今天；连续天数/累计天数
+ * 不在客户端自行计算（产品需求第5节，服务端权威）。
  */
+import CalendarGrid from "../../components/CalendarGrid.uvue";
+import { getThemeStore, localDevAccountId } from "../../features/AppContext";
+import { todayTargetDate } from "../../features/BusinessDate";
+import { buildMonthWeeks } from "../../features/CalendarView";
+import { CalendarCellView } from "../../features/FeatureTypes";
+import {
+  getStorageValue,
+  setStorageValue,
+} from "../../platform/ThemeEnvAdapter";
+import { SyncQueue } from "../../storage/SyncQueue";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { CalendarGrid },
   data() {
-    return { title: "日历" };
-  }
+    return {
+      theme: null as ResolvedTheme | null,
+      monthKey: "",
+      weeks: [] as CalendarCellView[],
+      selected: null as string | null,
+      pendingCount: 0,
+    };
+  },
+  onShow() {
+    this.theme = getThemeStore().getTheme();
+    const today = todayTargetDate();
+    this.monthKey = today.substring(0, 7);
+    const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+    queue.load();
+    const pendingDates: string[] = [];
+    for (const checkIn of queue.listPendingCheckIns()) {
+      pendingDates.push(checkIn.targetDate);
+    }
+    this.pendingCount = queue.pendingCount();
+    this.weeks = buildMonthWeeks(this.monthKey, today, pendingDates, [],
+      this.selected);
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    legendStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary + ";font-size:14px;";
+    },
+    hintStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.tertiary + ";";
+    },
+  },
+  methods: {
+    onSelect(date: string): void {
+      this.selected = date;
+      const today = todayTargetDate();
+      const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+      queue.load();
+      const pendingDates: string[] = [];
+      for (const checkIn of queue.listPendingCheckIns()) {
+        pendingDates.push(checkIn.targetDate);
+      }
+      this.weeks = buildMonthWeeks(this.monthKey, today, pendingDates, [],
+        this.selected);
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.legend {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
 </style>

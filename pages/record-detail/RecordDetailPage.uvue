@@ -1,25 +1,125 @@
 <template>
-  <view class="page">
-    <text class="title">记录详情</text>
-    <text class="body">录音回放与文字反馈（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">记录详情</text>
+    <AppList
+      :itemCount="attempts.length"
+      :loading="false"
+      :hasMore="false"
+      emptyText="本机还没有练习记录"
+      :theme="theme"
+      @retry="loadRecords"
+    >
+      <AppCard
+        v-for="(item, index) in attempts"
+        :key="index"
+        :theme="theme"
+        class="record"
+      >
+        <text :style="bodyStyle">题目：{{ item.itemId }}</text>
+        <text :style="hintStyle">状态：{{ item.state }}；完成时间（本机声明）：{{ item.clientCompletedAt }}</text>
+        <text v-if="hasPlayable(item)" :style="hintStyle">录音已在本机保存</text>
+        <text v-else :style="hintStyle">录音不可用或已按策略删除；文字反馈仍可查看</text>
+        <AppButton
+          v-if="hasPlayable(item)"
+          label="回放录音"
+          kind="secondary"
+          :theme="theme"
+          @action="onPlay(item)"
+        />
+      </AppCard>
+    </AppList>
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 记录详情页。录音可用时支持回放并展示反馈；录音已按策略删除时明确说明，
- * 保留的文字反馈仍可查看。家长可查看词/音素细节、原话与改写、供应商与
- * 任务状态；无真实返回的细节不展示伪造数据。
+ * 记录详情页：列出本机练习尝试，录音可用时支持回放。
+ * 录音已删除/不可用时明确说明，保留的文字反馈仍可查看（产品需求第2节）。
+ * 本机枚举使用 uni.getStorageInfoSync 的键列表，只读取草稿前缀；
+ * 服务端记录（反馈、补卡标记）待联调后合并展示。
  */
+import AppButton from "../../components/AppButton.uvue";
+import AppCard from "../../components/AppCard.uvue";
+import AppList from "../../components/AppList.uvue";
+import { getThemeStore } from "../../features/AppContext";
+import { createAudioPlayerAdapter } from "../../platform/AudioPlayerAdapter";
+import { LocalAttempt } from "../../storage/StorageTypes";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { AppButton, AppCard, AppList },
   data() {
-    return { title: "记录详情" };
-  }
+    return {
+      theme: null as ResolvedTheme | null,
+      attempts: [] as LocalAttempt[],
+    };
+  },
+  onShow() {
+    this.theme = getThemeStore().getTheme();
+    this.loadRecords();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    bodyStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";font-size:17px;";
+    },
+    hintStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.tertiary + ";font-size:14px;margin-bottom:8px;";
+    },
+  },
+  methods: {
+    loadRecords(): void {
+      const found: LocalAttempt[] = [];
+      const info = uni.getStorageInfoSync();
+      for (const key of info.keys) {
+        if (!key.startsWith("sprout.draft.")) {
+          continue;
+        }
+        const raw = uni.getStorageSync(key);
+        if (typeof raw !== "string") {
+          continue;
+        }
+        try {
+          found.push(JSON.parse(raw as string) as LocalAttempt);
+        } catch (e) {
+          console.error("draft parse failed: " + key);
+        }
+      }
+      this.attempts = found;
+    },
+    hasPlayable(item: LocalAttempt): boolean {
+      const ref = item.recordingRef;
+      return ref != null && ref.persistedPath.length > 0;
+    },
+    onPlay(item: LocalAttempt): void {
+      const ref = item.recordingRef;
+      if (ref != null && ref.persistedPath.length > 0) {
+        createAudioPlayerAdapter().play(ref.persistedPath);
+      }
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.record {
+  margin-bottom: 12px;
+}
 </style>
