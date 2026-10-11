@@ -1,0 +1,99 @@
+<template>
+  <view class="field">
+    <text v-if="label.length > 0" class="field-label" :style="labelStyle">
+      {{ label }}{{ required ? " *" : "" }}
+    </text>
+    <input
+      class="field-input"
+      :style="inputStyle"
+      :value="value"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :password="password"
+      @input="onInput"
+      @confirm="onSubmit"
+    />
+    <text v-if="error.length > 0" class="field-error" :style="errorStyle">
+      {{ error }}
+    </text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 共用表单输入：value/label/required/error/placeholder/disabled。
+ * label 与错误文字绑定展示；错误态为 error.fg 实线边框加错误文字，
+ * 不仅颜色区分；禁用态仍可读（disabled 配色组）。
+ */
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  props: {
+    value: { type: String, default: "" },
+    label: { type: String, default: "" },
+    placeholder: { type: String, default: "" },
+    required: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
+    password: { type: Boolean, default: false },
+    error: { type: String, default: "" },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["update", "submit"],
+  computed: {
+    hasError(): boolean {
+      return this.error.length > 0;
+    },
+    labelStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).text.secondary + ";";
+    },
+    inputStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      let bg = t.surface.input;
+      let border = t.border;
+      let color = t.text.primary;
+      if (this.disabled) {
+        bg = t.disabled.bg;
+        border = t.disabled.border;
+        color = t.disabled.fg;
+      } else if (this.hasError) {
+        border = t.status.error.fg;
+      }
+      return "background-color:" + bg + ";border-color:" + border
+        + ";color:" + color + ";";
+    },
+    errorStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).status.error.fg + ";";
+    },
+  },
+  methods: {
+    onInput(event: any): void {
+      this.$emit("update", event.detail.value as string);
+    },
+    onSubmit(): void {
+      this.$emit("submit");
+    },
+  },
+};
+</script>
+
+<style>
+.field {
+  margin-bottom: 16px;
+}
+.field-label {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.field-input {
+  min-height: 40px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  padding: 8px 12px;
+  font-size: 17px;
+}
+.field-error {
+  font-size: 14px;
+  margin-top: 4px;
+}
+</style>

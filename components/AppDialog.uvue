@@ -1,0 +1,109 @@
+<template>
+  <view v-if="visible" class="overlay" :style="scrimStyle" @click="onScrimTap">
+    <view class="dialog" :style="dialogStyle" @click.stop="">
+      <text class="dialog-title" :style="titleStyle">{{ title }}</text>
+      <view class="dialog-content">
+        <slot></slot>
+      </view>
+      <view class="dialog-actions">
+        <AppButton
+          v-if="cancelLabel.length > 0"
+          :label="cancelLabel"
+          kind="secondary"
+          :theme="theme"
+          @action="onCancel"
+        />
+        <AppButton
+          :label="confirmLabel"
+          kind="primary"
+          :theme="theme"
+          @action="onConfirm"
+        />
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 共用弹层：open/title/content/actions/closePolicy。承载卡不透明（elevated
+ * 表面色），scrim 后不承载内容；主题切换即时生效（样式由 theme props 驱动）。
+ * 焦点恢复与键盘避让依赖端能力，逐端验证后补全。
+ */
+import AppButton from "./AppButton.uvue";
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  components: { AppButton },
+  props: {
+    open: { type: Boolean, default: false },
+    title: { type: String, default: "" },
+    confirmLabel: { type: String, default: "确认" },
+    cancelLabel: { type: String, default: "取消" },
+    /** closePolicy: "scrim" 允许点遮罩关闭，"explicit" 仅按钮关闭。 */
+    closePolicy: { type: String, default: "scrim" },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["confirm", "cancel"],
+  computed: {
+    visible(): boolean {
+      return this.open;
+    },
+    scrimStyle(): string {
+      return "background-color:" + (this.theme as ResolvedTheme).scrim + ";";
+    },
+    dialogStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      return "background-color:" + t.surface.elevated
+        + ";border-color:" + t.border + ";";
+    },
+    titleStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).text.primary + ";";
+    },
+  },
+  methods: {
+    onScrimTap(): void {
+      if (this.closePolicy === "scrim") {
+        this.$emit("cancel");
+      }
+    },
+    onConfirm(): void {
+      this.$emit("confirm");
+    },
+    onCancel(): void {
+      this.$emit("cancel");
+    },
+  },
+};
+</script>
+
+<style>
+.overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  align-items: center;
+  justify-content: center;
+}
+.dialog {
+  width: 320px;
+  border-radius: 24px;
+  border-width: 1px;
+  border-style: solid;
+  padding: 24px;
+}
+.dialog-title {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.dialog-content {
+  margin-bottom: 24px;
+}
+.dialog-actions {
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 12px;
+}
+</style>

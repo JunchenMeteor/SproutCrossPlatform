@@ -1,0 +1,88 @@
+<template>
+  <view v-if="visible" class="toast" :class="{ banner: banner }" :style="toastStyle">
+    <text :style="messageStyle">{{ message }}</text>
+    <view v-if="actionLabel.length > 0" @click="onAction">
+      <text :style="actionStyle">{{ actionLabel }}</text>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 共用通知：semantic(success/warning/error/info)、message、action、duration。
+ * 严重错误用 banner 模式持续展示，不只弹短 toast；状态色来自 theme.status，
+ * 不透明底色 + 对应 fg/icon，颜色不是唯一状态标识（附语义文字）。
+ */
+import { ResolvedTheme, StatusTokens } from "../theme/ThemeTypes";
+
+export default {
+  props: {
+    visible: { type: Boolean, default: false },
+    semantic: { type: String, default: "info" },
+    message: { type: String, default: "" },
+    actionLabel: { type: String, default: "" },
+    /** banner 为 true 时不自动消失，需显式关闭。 */
+    banner: { type: Boolean, default: false },
+    durationMs: { type: Number, default: 3000 },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["action", "close"],
+  watch: {
+    visible(value: boolean): void {
+      if (value && !this.banner) {
+        setTimeout(() => {
+          this.$emit("close");
+        }, this.durationMs);
+      }
+    },
+  },
+  computed: {
+    statusTokens(): StatusTokens {
+      const status = (this.theme as ResolvedTheme).status;
+      if (this.semantic === "success") {
+        return status.success;
+      }
+      if (this.semantic === "warning") {
+        return status.warning;
+      }
+      if (this.semantic === "error") {
+        return status.error;
+      }
+      return status.info;
+    },
+    toastStyle(): string {
+      const s = this.statusTokens;
+      return "background-color:" + s.bg + ";border-color:" + s.fg + ";";
+    },
+    messageStyle(): string {
+      return "color:" + this.statusTokens.fg + ";";
+    },
+    actionStyle(): string {
+      return "color:" + this.statusTokens.fg
+        + ";text-decoration:underline;font-size:14px;";
+    },
+  },
+  methods: {
+    onAction(): void {
+      this.$emit("action");
+    },
+  },
+};
+</script>
+
+<style>
+.toast {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  padding: 12px 16px;
+  margin: 8px 16px;
+}
+.banner {
+  align-items: flex-start;
+  padding: 16px;
+}
+</style>

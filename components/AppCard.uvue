@@ -1,0 +1,50 @@
+<template>
+  <view class="card" :style="cardStyle" @click="onTap">
+    <slot></slot>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 共用卡片容器：padding/限宽/点击态区分。非点击态不显示按下反馈；
+ * 窄屏单列、宽屏由父布局限宽（reading 720 / wide 1120 逻辑单位，规范第8节）。
+ * 背景使用 card/elevated 表面色，阴影仅装饰不承载状态含义。
+ */
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  props: {
+    elevated: { type: Boolean, default: false },
+    clickable: { type: Boolean, default: false },
+    padding: { type: String, default: "16px" },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["action"],
+  data() {
+    return { pressed: false };
+  },
+  computed: {
+    cardStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      const bg = this.elevated ? t.surface.elevated : t.surface.card;
+      return "background-color:" + bg + ";border-color:" + t.border
+        + ";padding:" + this.padding + ";";
+    },
+  },
+  methods: {
+    onTap(): void {
+      if (this.clickable) {
+        this.$emit("action");
+      }
+    },
+  },
+};
+</script>
+
+<style>
+.card {
+  border-radius: 20px;
+  border-width: 1px;
+  border-style: solid;
+}
+</style>

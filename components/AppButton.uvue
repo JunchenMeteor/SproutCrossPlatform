@@ -1,0 +1,111 @@
+<template>
+  <view
+    class="btn"
+    :style="buttonStyle"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchEnd"
+    @click="onTap"
+  >
+    <text :style="labelStyle">{{ displayLabel }}</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 共用按钮：kind(primary/secondary/link)、size(normal/large)、disabled、loading。
+ * 稳定 label、防连点（800ms 内忽略重复点击）、pressed 边界变化。
+ * 主按钮 accent 底 + #14243B 深字 + 深边框（规范第6节对比要求）；
+ * 儿童主操作 large 尺寸触控高度 48 逻辑单位。颜色全部来自 theme props。
+ */
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  props: {
+    label: { type: String, default: "" },
+    kind: { type: String, default: "primary" },
+    size: { type: String, default: "normal" },
+    disabled: { type: Boolean, default: false },
+    loading: { type: Boolean, default: false },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["action"],
+  data() {
+    return { pressed: false, lastTapAt: 0 };
+  },
+  computed: {
+    displayLabel(): string {
+      return this.loading ? this.label + "…" : this.label;
+    },
+    buttonStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      let bg = t.button.primaryBg;
+      let border = t.button.primaryBorder;
+      if (this.kind === "secondary") {
+        bg = t.button.secondaryBg;
+        border = t.button.secondaryBorder;
+      } else if (this.kind === "link") {
+        bg = "transparent";
+        border = "transparent";
+      }
+      if (this.disabled) {
+        bg = this.kind === "link" ? "transparent" : t.disabled.bg;
+        border = t.disabled.border;
+      } else if (this.pressed && this.kind !== "link") {
+        border = t.pressed.border;
+      }
+      const minHeight = this.size === "large" ? "48px" : "40px";
+      return "background-color:" + bg + ";border-color:" + border
+        + ";min-height:" + minHeight + ";";
+    },
+    labelStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      let color = t.button.primaryFg;
+      if (this.kind === "secondary") {
+        color = t.button.secondaryFg;
+      } else if (this.kind === "link") {
+        color = t.link;
+      }
+      if (this.disabled) {
+        color = t.disabled.fg;
+      }
+      const size = this.size === "large" ? "17px" : "14px";
+      return "color:" + color + ";font-size:" + size + ";";
+    },
+  },
+  methods: {
+    onTouchStart(): void {
+      if (!this.disabled && !this.loading) {
+        this.pressed = true;
+      }
+    },
+    onTouchEnd(): void {
+      this.pressed = false;
+    },
+    onTap(): void {
+      if (this.disabled || this.loading) {
+        return;
+      }
+      const now = Date.now();
+      if (now - this.lastTapAt < 800) {
+        return;
+      }
+      this.lastTapAt = now;
+      this.$emit("action");
+    },
+  },
+};
+</script>
+
+<style>
+.btn {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+</style>
