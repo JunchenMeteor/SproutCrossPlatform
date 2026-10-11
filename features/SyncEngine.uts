@@ -1,0 +1,154 @@
+/**
+ * 离线同步引擎：联网后按账号回放待同步队列。
+ * 只调用 EC-API-0.1 已定义的端点（POST /v1/audio、POST
+ * /v1/children/{childId}/check-ins）；契约缺口（第5.6节）未冻结前字段以
+ * 后端 canonical schema 为准，本实现未联调，不声称可用。
+ * 重复提交由幂等键与服务端唯一约束去重；本引擎不计算奖励。
+ */
+import { RequestClient, RequestResult } from "../services/RequestClient";
+import { ClientContextProvider } from "../services/ClientContextProvider";
+import { SyncQueue } from "../storage/SyncQueue";
+import { LocalAttempt, PendingCheckIn } from "../storage/StorageTypes";
+
+export type SyncReport = {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+  /** 未配置服务端地址时为 true，其余情况 false。 */
+  skippedNoServer: boolean;
+};
+
+export class SyncEngine {
+  private queue: SyncQueue;
+  private client: RequestClient | null;
+  private contextProvider: ClientContextProvider;
+
+  constructor(queue: SyncQueue, client: RequestClient | null,
+    contextProvider: ClientContextProvider) {
+    this.queue = queue;
+    this.client = client;
+    this.contextProvider = contextProvider;
+  }
+
+  /** 回放全部待同步条目；未配置服务端时跳过并如实报告。 */
+  async flush(): Promise<SyncReport> {
+    const report = { attempted: 0, succeeded: 0, failed: 0,
+      skippedNoServer: this.client == null } as SyncReport;
+    if (this.client == null) {
+      return report;
+    }
+    const attempts = this.queue.listPendingAttempts();
+    for (const attempt of attempts) {
+      report.attempted += 1;
+      const ok = await this.syncAttempt(attempt);
+      if (ok) {
+        report.succeeded += 1;
+      } else {
+        report.failed += 1;
+      }
+    }
+    const checkIns = this.queue.listPendingCheckIns();
+    for (const checkIn of checkIns) {
+      report.attempted += 1;
+      const ok = await this.syncCheckIn(checkIn);
+      if (ok) {
+        report.succeeded += 1;
+      } else {
+        report.failed += 1;
+      }
+    }
+    return report;
+  }
+
+  /** 上传单个录音尝试（EC-API-0.1 POST /v1/audio）；失败保留 retryable。 */
+  private async syncAttempt(attempt: LocalAttempt): Promise<boolean> {
+    const ref = attempt.recordingRef;
+    if (ref == null || ref.persistedPath.length === 0) {
+      attempt.state = "failed";
+      attempt.lastError = "录音文件不可用";
+      this.queue.updateAttempt(attempt);
+      return false;
+    }
+    attempt.state = "syncing";
+    this.queue.updateAttempt(attempt);
+    const fields = {} as UTSJSONObject;
+    fields["childId"] = attempt.childId;
+    fields["clientAttemptId"] = attempt.clientAttemptId;
+    fields["sha256"] = ref.sha256;
+    if (attempt.planId != null) {
+      fields["planId"] = attempt.planId as string;
+    }
+    fields["itemId"] = attempt.itemId;
+    try {
+      const client = this.client as RequestClient;
+      const key = this.contextProvider.newIdempotencyKey();
+      const result: RequestResult = await client.uploadFile(
+        "/v1/audio", ref.persistedPath, fields, key);
+      if (result.statusCode >= 200 && result.statusCode < 300) {
+        attempt.state = "confirmed";
+        this.queue.removeAttempt(attempt.clientAttemptId);
+        return true;
+      }
+      attempt.state = "failed";
+      attempt.retryable = result.statusCode >= 500 || result.statusCode === 429;
+      attempt.lastError = "HTTP " + result.statusCode;
+      this.queue.updateAttempt(attempt);
+      return false;
+    } catch (e) {
+      attempt.state = "failed";
+      attempt.retryable = true;
+      attempt.lastError = "网络异常";
+      this.queue.updateAttempt(attempt);
+      return false;
+    }
+  }
+
+  /** 提交待确认打卡（EC-API-0.1 POST /v1/children/{childId}/check-ins）。 */
+  private async syncCheckIn(checkIn: PendingCheckIn): Promise<boolean> {
+    checkIn.state = "syncing";
+    this.queue.enqueueCheckIn(checkIn);
+    const body = {} as UTSJSONObject;
+    body["targetDate"] = checkIn.targetDate;
+    body["clientCompletionId"] = checkIn.clientCompletionId;
+    body["clientCompletedAt"] = checkIn.clientCompletedAt;
+    const outcomeList: UTSJSONObject[] = [];
+    for (const outcome of checkIn.itemOutcomes) {
+      const entry = {} as UTSJSONObject;
+      entry["itemId"] = outcome.itemId;
+      entry["outcome"] = outcome.outcome;
+      if (outcome.localAttemptId != null) {
+        entry["localAttemptId"] = outcome.localAttemptId as string;
+      }
+      if (outcome.skipReason != null) {
+        entry["skipReason"] = outcome.skipReason as string;
+      }
+      outcomeList.push(entry);
+    }
+    body["itemOutcomes"] = outcomeList;
+    if (checkIn.planId != null) {
+      body["planId"] = checkIn.planId as string;
+    }
+    try {
+      const client = this.client as RequestClient;
+      const key = this.contextProvider.newIdempotencyKey();
+      const path = "/v1/children/" + checkIn.childId + "/check-ins";
+      const result = await client.requestJson("POST", path, body, key);
+      if (result.statusCode >= 200 && result.statusCode < 300) {
+        checkIn.state = "confirmed";
+        this.queue.removeCheckIn(checkIn.clientCompletionId);
+        return true;
+      }
+      checkIn.state = "failed";
+      checkIn.retryable = result.statusCode >= 500 || result.statusCode === 429;
+      checkIn.lastError = "HTTP " + result.statusCode;
+      this.queue.enqueueCheckIn(checkIn);
+      return false;
+    } catch (e) {
+      checkIn.state = "failed";
+      checkIn.retryable = true;
+      checkIn.lastError = "网络异常";
+      this.queue.enqueueCheckIn(checkIn);
+      return false;
+    }
+  }
+}

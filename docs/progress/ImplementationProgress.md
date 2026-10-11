@@ -17,6 +17,7 @@
 | 网络层 | 骨架完成（未联调） | services/：ClientContextProvider（X-Client-* headers、uniAppX/平台枚举、契约版本）、RequestClient（统一注入、幂等键、非 JSON 降级、预签名下载不带凭据）；不定义业务端点，待契约冻结 |
 | 本地存储与离线 | 源码完成（未运行） | storage/：SyncQueue（按账号隔离、稳定 UUID、重试不新建条目）、DraftStore（草稿 + 服务端已确认 Plan 离线缓存，无缓存不承诺离线打卡） |
 | 平台 adapter | 源码完成（未编译） | platform/：RecorderAdapter 契约+工厂、UniRecorderAdapter（小程序/Android/鸿蒙）、WebRecorderAdapter（MediaRecorder 单独实现）、PermissionAdapter、FileAdapter（临时录音转存）、AudioPlayerAdapter；均标注逐端实测要求 |
+| 业务用例 features/ | 源码完成（未运行） | PracticeSession（计划加载/逐题录音/草稿/完成入队，评测不是打卡前提）、SyncEngine（仅调 EC-API-0.1 已定义端点，未联调）、DemoFixtures（原创演示小样，明确标注不冒充课本） |
 | 四端验证 | 未开始 | 见第3节平台矩阵 |
 
 ## 2. 工具链现状与限制

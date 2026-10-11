@@ -1,0 +1,39 @@
+/**
+ * 原创演示 fixture：教材版本与课次未确认前的流程验证数据。
+ * 内容为原创小样，明确标注演示来源，不冒充清华版课本内容（产品需求第2节、
+ * ProjectFacts 待确认项）。契约冻结或真实教材确认后删除或迁移到 tests/。
+ */
+import { PracticeItemType, PracticeItemView, PracticePlanView } from "./FeatureTypes";
+
+function demoItem(itemId: string, type: PracticeItemType, prompt: string,
+  referenceText: string | null, suggestedSeconds: number): PracticeItemView {
+  return {
+    itemId: itemId,
+    type: type,
+    prompt: prompt,
+    referenceText: referenceText,
+    suggestedSeconds: suggestedSeconds,
+    required: true,
+    exampleAudioPath: null,
+    outcome: null,
+    attempt: null,
+  } as PracticeItemView;
+}
+
+/** 构建当日演示计划；targetDate 由调用方按业务日期（Asia/Shanghai）传入。 */
+export function buildDemoPlan(childId: string, targetDate: string): PracticePlanView {
+  const items: PracticeItemView[] = [
+    demoItem("demo-repeat-1", "repeat", "跟着读一读", "Good morning, Miss Li.", 30),
+    demoItem("demo-repeat-2", "repeat", "跟着读一读", "I like reading books.", 30),
+    demoItem("demo-free-1", "free_expression",
+      "说说你今天想做的一件事（用英语，一两句就好）", null, 60),
+  ];
+  return {
+    planId: null,
+    childId: childId,
+    targetDate: targetDate,
+    dayMode: "review",
+    confirmed: false,
+    items: items,
+  } as PracticePlanView;
+}

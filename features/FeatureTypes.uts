@@ -1,0 +1,42 @@
+/**
+ * 业务用例共享类型：练习会话视图模型。
+ * 页面只组合这些视图状态与共用组件；契约字段与 EC-API-0.1 对齐，
+ * 未冻结字段（TechnicalDesign.md 第5.6节）不在此扩展。
+ */
+import { LocalAttempt } from "../storage/StorageTypes";
+
+export type PracticeItemType = "repeat" | "free_expression";
+
+/** 练习条目视图：跟读有参考句，自由表达只有主题提示。 */
+export type PracticeItemView = {
+  itemId: string;
+  type: PracticeItemType;
+  prompt: string;
+  referenceText: string | null;
+  suggestedSeconds: number;
+  required: boolean;
+  exampleAudioPath: string | null;
+  outcome: string | null;
+  attempt: LocalAttempt | null;
+};
+
+export type SessionState =
+  "loading" | "ready" | "recording" | "review" | "completing" | "done" | "error";
+
+export type PracticePlanView = {
+  planId: string | null;
+  childId: string;
+  targetDate: string;
+  dayMode: string;
+  /** true 表示服务端已确认 Plan 缓存；false 为本地演示 fixture。 */
+  confirmed: boolean;
+  items: PracticeItemView[];
+};
+
+export type SessionSnapshot = {
+  state: SessionState;
+  plan: PracticePlanView | null;
+  currentIndex: number;
+  recordingDurationMs: number;
+  errorMessage: string;
+};

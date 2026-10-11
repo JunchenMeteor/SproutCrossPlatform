@@ -1,0 +1,187 @@
+/**
+ * 练习会话用例：加载计划（已确认缓存或演示 fixture）、逐题录音、草稿
+ * 持久化、完成入队。录音/文件/权限经注入的 adapter，不访问平台 API；
+ * 评测不是打卡前提（产品需求第5节），完成只依赖基础题完成规则。
+ * 离线边界：无已确认 Plan 缓存时只用明确标注的演示 fixture，不声称
+ * 完成了服务端打卡；联网恢复由 SyncEngine 处理。
+ */
+import {
+  PracticePlanView,
+  SessionSnapshot,
+  SessionState,
+} from "./FeatureTypes";
+import { RecorderAdapter } from "../platform/RecorderAdapter";
+import { FileAdapter } from "../platform/FileAdapter";
+import { RecordingResult } from "../platform/PlatformTypes";
+import { DraftStore } from "../storage/DraftStore";
+import { SyncQueue } from "../storage/SyncQueue";
+import {
+  LocalAttempt,
+  LocalItemOutcome,
+  PendingCheckIn,
+} from "../storage/StorageTypes";
+
+export type IdGenerator = () => string;
+
+export type Clock = () => string;
+
+export class PracticeSession {
+  private recorder: RecorderAdapter;
+  private files: FileAdapter;
+  private drafts: DraftStore;
+  private queue: SyncQueue;
+  private newId: IdGenerator;
+  private now: Clock;
+  private plan: PracticePlanView | null = null;
+  private state: SessionState = "loading";
+  private currentIndex: number = 0;
+
+  constructor(recorder: RecorderAdapter, files: FileAdapter, drafts: DraftStore,
+    queue: SyncQueue, newId: IdGenerator, now: Clock) {
+    this.recorder = recorder;
+    this.files = files;
+    this.drafts = drafts;
+    this.queue = queue;
+    this.newId = newId;
+    this.now = now;
+    this.bindRecorder();
+  }
+
+  private bindRecorder(): void {
+    this.recorder.onResult((result) => {
+      this.onRecordingFinished(result);
+    });
+    this.recorder.onError((error) => {
+      this.state = "error";
+    });
+  }
+
+  /** 优先加载服务端已确认的 Plan 缓存；无缓存时由调用方决定是否用演示。 */
+  loadPlan(plan: PracticePlanView): void {
+    this.plan = plan;
+    this.currentIndex = 0;
+    this.state = "ready";
+  }
+
+  getSnapshot(): SessionSnapshot {
+    return {
+      state: this.state,
+      plan: this.plan,
+      currentIndex: this.currentIndex,
+      recordingDurationMs: 0,
+      errorMessage: "",
+    } as SessionSnapshot;
+  }
+
+  startRecording(): void {
+    const plan = this.plan;
+    if (plan == null || this.currentIndex >= plan.items.length) {
+      return;
+    }
+    const item = plan.items[this.currentIndex];
+    this.state = "recording";
+    this.recorder.start({
+      maxDurationMs: Math.max(item.suggestedSeconds, 30) * 1000,
+      sampleRate: 16000,
+      channels: 1,
+    });
+  }
+
+  stopRecording(): void {
+    if (this.state === "recording") {
+      this.recorder.stop();
+    }
+  }
+
+  /** 录音完成：立即转存临时文件并保存草稿（断网/退出可恢复）。 */
+  private onRecordingFinished(result: RecordingResult): void {
+    const plan = this.plan;
+    if (plan == null) {
+      return;
+    }
+    const item = plan.items[this.currentIndex];
+    const attempt: LocalAttempt = {
+      clientAttemptId: this.newId(),
+      childId: plan.childId,
+      planId: plan.planId,
+      itemId: item.itemId,
+      state: "recorded",
+      recordingRef: null,
+      clientCompletedAt: this.now(),
+      retryable: true,
+      lastError: null,
+    } as LocalAttempt;
+    this.files.persistRecording(result).then((ref) => {
+      attempt.recordingRef = ref;
+      attempt.state = "queued";
+      item.attempt = attempt;
+      item.outcome = "completed";
+      this.drafts.saveDraft(attempt);
+      this.queue.enqueueAttempt(attempt);
+      this.state = "review";
+    }).catch((err) => {
+      attempt.state = "failed";
+      attempt.lastError = "录音保存失败";
+      this.drafts.saveDraft(attempt);
+      this.state = "error";
+    });
+  }
+
+  /** 跳过当前题：原因枚举以后端 completionPolicy 为准，这里只记录事实。 */
+  skipItem(reason: string): void {
+    const plan = this.plan;
+    if (plan == null || this.currentIndex >= plan.items.length) {
+      return;
+    }
+    plan.items[this.currentIndex].outcome = "skipped";
+    this.moveNext();
+  }
+
+  moveNext(): void {
+    const plan = this.plan;
+    if (plan == null) {
+      return;
+    }
+    if (this.currentIndex + 1 < plan.items.length) {
+      this.currentIndex += 1;
+      this.state = "ready";
+    } else {
+      this.state = "completing";
+    }
+  }
+
+  /** 完成基础计划：生成待同步打卡记录入队；不等待评测，不本地发奖。 */
+  completePlan(): PendingCheckIn | null {
+    const plan = this.plan;
+    if (plan == null) {
+      return null;
+    }
+    const outcomes: LocalItemOutcome[] = [];
+    for (const item of plan.items) {
+      if (item.outcome == null) {
+        continue;
+      }
+      outcomes.push({
+        itemId: item.itemId,
+        outcome: item.outcome as string,
+        localAttemptId: item.attempt != null
+          ? (item.attempt as LocalAttempt).clientAttemptId : null,
+        skipReason: null,
+      } as LocalItemOutcome);
+    }
+    const checkIn: PendingCheckIn = {
+      clientCompletionId: this.newId(),
+      childId: plan.childId,
+      planId: plan.planId,
+      targetDate: plan.targetDate,
+      clientCompletedAt: this.now(),
+      itemOutcomes: outcomes,
+      state: "queued",
+      retryable: true,
+      lastError: null,
+    } as PendingCheckIn;
+    this.queue.enqueueCheckIn(checkIn);
+    this.state = "done";
+    return checkIn;
+  }
+}
