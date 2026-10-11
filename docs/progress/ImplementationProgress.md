@@ -27,7 +27,7 @@
 | --- | --- | --- |
 | Node.js | v24.18.0 可用（C:\Program Files\nodejs） | 可用于脚本与依赖管理 |
 | Git | 2.46.0.windows.1 可用 | 本地仓库正常 |
-| HBuilderX | 未安装（Program Files、AppData、Tools 均未发现） | uni-app x 官方主编译入口缺失，四端编译/运行验证受阻；需用户安装 HBuilderX 后打开本仓库目录验证，或使用官方 CLI（可用性待核对官方文档） |
+| HBuilderX | ✅ 5.26.2026091802 便携版已部署于 Tools/HBuilderX（官方 release.json 校验，89.56MB zip 字节数一致）；cli.exe 可用 | uni-app x 无独立 CLI 脚手架（官方问答 2026-09 确认仅 HBuilderX）；已通过 cli project open 导入本仓库 |
 | 微信开发者工具 | 未核对 | 小程序预览/真机验证需要 |
 | Android SDK / 鸿蒙 DevEco | 未核对 | Android 与原生 HarmonyOS NEXT 验证需要；鸿蒙须独立验证，APK 不作证据 |
 
@@ -38,8 +38,8 @@
 
 | 平台 | 编译 | 运行/录音 | 权限/文件 | 登录 | 离线/主题/布局 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 微信小程序 | 未验证 | 未验证 | 未验证 | 未验证 | 未验证 | 工具链缺失 |
-| Web | 未验证 | 未验证（录音须单独适配） | 未验证 | 未验证 | 未验证 | 工具链缺失 |
+| 微信小程序 | 未验证 | 未验证 | 未验证 | 未验证 | 未验证 | HBuilderX 5.26 已就绪，待编译 |
+| Web | ✅ 编译通过（HBuilderX 5.26，uni-app x VDOM，2026-10-11） | 运行待验（录音单独适配） | 未验证 | 未验证 | 未验证 | 缺 index.html 已补；运行与录音验证进行中 |
 | Android | 未验证 | 未验证 | 未验证 | 未验证 | 未验证 | 工具链缺失 |
 | HarmonyOS NEXT（原生） | 未验证 | 未验证 | 未验证 | 未验证 | 未验证 | 工具链缺失；不得以 Android APK 代替 |
 

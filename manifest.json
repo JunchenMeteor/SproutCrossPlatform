@@ -7,11 +7,20 @@
   "transformPx": false,
   "uni-app-x": {},
   "app": {},
-  "app-harmony": {},
+  "app-harmony": {
+    "distribute": {
+      "deviceTypes": [
+        "phone",
+        "tablet",
+        "2in1"
+      ]
+    }
+  },
   "mp-weixin": {
     "appid": "",
     "setting": {
-      "urlCheck": false
+      "urlCheck": false,
+      "es6": false
     },
     "permission": {
       "scope.record": {
@@ -21,5 +30,26 @@
   },
   "h5": {
     "title": "英语练习打卡"
+  },
+  "web": {
+    "router": {
+      "mode": ""
+    }
+  },
+  "app-android": {
+    "distribute": {
+      "modules": {},
+      "icons": {},
+      "splashScreens": {
+        "default": {}
+      }
+    }
+  },
+  "app-ios": {
+    "distribute": {
+      "modules": {},
+      "icons": {},
+      "splashScreens": {}
+    }
   }
 }
