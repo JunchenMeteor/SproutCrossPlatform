@@ -1,0 +1,100 @@
+<template>
+  <AppCard :theme="theme" class="feedback">
+    <view v-if="state === 'pending'" class="feedback-row">
+      <text :style="bodyStyle">反馈稍后送达，不影响打卡</text>
+    </view>
+    <view v-else-if="state === 'uncertain'" class="feedback-row">
+      <text :style="bodyStyle">听得不够清楚，请回放确认</text>
+    </view>
+    <view v-else-if="state === 'error'" class="feedback-row">
+      <text :style="errorStyle">这部分反馈没有完成，可以稍后重试</text>
+      <AppButton
+        v-if="retryable"
+        label="重试反馈"
+        kind="secondary"
+        :theme="theme"
+        @action="onRetry"
+      />
+    </view>
+    <view v-else class="feedback-row">
+      <text v-if="childTip.length > 0" class="feedback-tip" :style="tipStyle">
+        {{ childTip }}
+      </text>
+      <text v-if="encouragement.length > 0" :style="bodyStyle">
+        {{ encouragement }}
+      </text>
+      <view v-if="parentDetails.length > 0" @click="toggleDetails">
+        <text :style="linkStyle">
+          {{ detailsOpen ? "收起细节" : "查看细节（家长）" }}
+        </text>
+      </view>
+      <text v-if="detailsOpen" :style="bodyStyle">{{ parentDetails }}</text>
+    </view>
+  </AppCard>
+</template>
+
+<script lang="uts">
+/**
+ * 反馈卡片：pending/partial/uncertain/ready/error。
+ * 儿童视图一次只给一个关键改进点（childTip）加具体鼓励，不展示分数羞辱；
+ * 家长细节折叠展开。无供应商置信度时不显示百分比；识别不确定显示
+ * “听得不够清楚，请回放确认”，不扣分（产品需求第4节）。
+ */
+import AppButton from "./AppButton.uvue";
+import AppCard from "./AppCard.uvue";
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  components: { AppButton, AppCard },
+  props: {
+    state: { type: String, default: "pending" },
+    childTip: { type: String, default: "" },
+    encouragement: { type: String, default: "" },
+    parentDetails: { type: String, default: "" },
+    retryable: { type: Boolean, default: false },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["retry"],
+  data() {
+    return { detailsOpen: false };
+  },
+  computed: {
+    bodyStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).text.primary
+        + ";font-size:17px;margin-bottom:8px;";
+    },
+    tipStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).text.primary + ";";
+    },
+    errorStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      return "color:" + t.status.error.fg + ";font-size:17px;margin-bottom:12px;";
+    },
+    linkStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).link
+        + ";font-size:14px;text-decoration:underline;margin-bottom:8px;";
+    },
+  },
+  methods: {
+    toggleDetails(): void {
+      this.detailsOpen = !this.detailsOpen;
+    },
+    onRetry(): void {
+      this.$emit("retry");
+    },
+  },
+};
+</script>
+
+<style>
+.feedback {
+  margin-bottom: 16px;
+}
+.feedback-row {
+  flex-direction: column;
+}
+.feedback-tip {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+</style>

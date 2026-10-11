@@ -1,0 +1,84 @@
+<template>
+  <view class="list">
+    <view v-if="loading && itemCount === 0" class="list-state">
+      <text :style="stateTextStyle">加载中…</text>
+    </view>
+    <view v-else-if="error.length > 0 && itemCount === 0" class="list-state">
+      <text :style="errorTextStyle">{{ error }}</text>
+      <AppButton label="重试" kind="secondary" :theme="theme" @action="onRetry" />
+    </view>
+    <view v-else-if="itemCount === 0" class="list-state">
+      <text :style="stateTextStyle">{{ emptyText }}</text>
+    </view>
+    <scroll-view v-else class="list-scroll" scroll-y @scrolltolower="onLoadMore">
+      <slot></slot>
+      <view v-if="loadingMore" class="list-footer">
+        <text :style="stateTextStyle">加载更多…</text>
+      </view>
+      <view v-else-if="!hasMore" class="list-footer">
+        <text :style="stateTextStyle">没有更多了</text>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 共用列表容器：loading/empty/error/retry 状态分离，移动端滚动加载更多。
+ * 桌面分页语义与移动端加载更多共享 cursor（契约 data.items + nextCursor）；
+ * loading 与 empty 分离，错误态提供重试操作。
+ */
+import AppButton from "./AppButton.uvue";
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  components: { AppButton },
+  props: {
+    itemCount: { type: Number, default: 0 },
+    loading: { type: Boolean, default: false },
+    loadingMore: { type: Boolean, default: false },
+    hasMore: { type: Boolean, default: false },
+    error: { type: String, default: "" },
+    emptyText: { type: String, default: "暂无内容" },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["retry", "loadMore"],
+  computed: {
+    stateTextStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).text.secondary + ";";
+    },
+    errorTextStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      return "color:" + t.status.error.fg + ";margin-bottom:12px;";
+    },
+  },
+  methods: {
+    onRetry(): void {
+      this.$emit("retry");
+    },
+    onLoadMore(): void {
+      if (this.hasMore && !this.loadingMore) {
+        this.$emit("loadMore");
+      }
+    },
+  },
+};
+</script>
+
+<style>
+.list {
+  flex: 1;
+}
+.list-state {
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+.list-scroll {
+  flex: 1;
+}
+.list-footer {
+  align-items: center;
+  padding: 16px;
+}
+</style>

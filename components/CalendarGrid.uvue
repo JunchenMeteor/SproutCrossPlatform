@@ -1,0 +1,115 @@
+<template>
+  <view class="calendar">
+    <view class="calendar-row" v-for="(week, weekIndex) in weeks" :key="weekIndex">
+      <view
+        v-for="(cell, dayIndex) in week"
+        :key="dayIndex"
+        class="calendar-cell"
+        :style="cellStyle(cell)"
+        @click="onSelect(cell)"
+      >
+        <text :style="cellTextStyle(cell)">{{ cell.label }}</text>
+        <text v-if="cell.makeup" :style="makeupStyle">补</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 日历网格：targetDate/confirmedAt/makeup/selected。
+ * 完成、补卡、选中、今天均有图形或文字标识，不仅颜色区分（补卡显示“补”）。
+ * 日期与连续天数数据由服务端契约提供，组件不自行计算连续链。
+ */
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export type CalendarCell = {
+  date: string;
+  label: string;
+  inMonth: boolean;
+  isToday: boolean;
+  selected: boolean;
+  completed: boolean;
+  makeup: boolean;
+};
+
+export default {
+  props: {
+    weeks: { type: Array as PropType<CalendarCell[]>, default: [] },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["select"],
+  methods: {
+    cellStyle(cell: CalendarCell): string {
+      const t = this.theme as ResolvedTheme;
+      if (!cell.inMonth) {
+        return "background-color:transparent;border-color:transparent;";
+      }
+      if (cell.selected) {
+        return "background-color:" + t.selectionBg
+          + ";border-color:" + t.selectionBorder + ";";
+      }
+      if (cell.completed) {
+        return "background-color:" + t.status.success.bg
+          + ";border-color:" + t.status.success.icon + ";";
+      }
+      if (cell.makeup) {
+        return "background-color:" + t.status.info.bg
+          + ";border-color:" + t.status.info.icon + ";";
+      }
+      let base = "background-color:" + t.calendar.cellBg
+        + ";border-color:" + t.border + ";";
+      if (cell.isToday) {
+        base = "background-color:" + t.calendar.cellBg
+          + ";border-color:" + t.focusBorder + ";border-width:2px;";
+      }
+      return base;
+    },
+    cellTextStyle(cell: CalendarCell): string {
+      const t = this.theme as ResolvedTheme;
+      if (!cell.inMonth) {
+        return "color:transparent;";
+      }
+      if (cell.selected) {
+        return "color:" + t.selectionFg + ";";
+      }
+      if (cell.completed) {
+        return "color:" + t.status.success.fg + ";";
+      }
+      if (cell.makeup) {
+        return "color:" + t.status.info.fg + ";";
+      }
+      return "color:" + t.calendar.cellFg + ";";
+    },
+    makeupStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).status.info.fg
+        + ";font-size:10px;";
+    },
+    onSelect(cell: CalendarCell): void {
+      if (cell.inMonth) {
+        this.$emit("select", cell.date);
+      }
+    },
+  },
+};
+</script>
+
+<style>
+.calendar {
+  flex-direction: column;
+}
+.calendar-row {
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.calendar-cell {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  align-items: center;
+  justify-content: center;
+}
+</style>

@@ -1,0 +1,91 @@
+<template>
+  <AppCard :theme="theme" class="reward">
+    <view v-if="state === 'locked'" class="reward-body">
+      <view class="reward-silhouette" :style="silhouetteStyle">
+        <text :style="silhouetteTextStyle">?</text>
+      </view>
+      <text :style="subtitleStyle">再打卡 {{ remainingDays }} 天解锁</text>
+    </view>
+    <view v-else-if="state === 'pending'" class="reward-body">
+      <text :style="titleStyle">{{ title }}</text>
+      <text :style="pendingStyle">已在这台设备保存，联网后确认</text>
+    </view>
+    <view v-else class="reward-body">
+      <text class="reward-title" :style="titleStyle">{{ title }}</text>
+      <text v-if="subtitle.length > 0" :style="subtitleStyle">{{ subtitle }}</text>
+      <text v-if="confirmed" :style="badgeStyle">已收藏</text>
+    </view>
+  </AppCard>
+</template>
+
+<script lang="uts">
+/**
+ * 奖励卡片：pending/confirmed/locked/item/nextTarget。
+ * 奖励由服务端确认后才播动画（动画在页面层，可跳过/静态降级，动画不发奖）；
+ * 离线 pending 显示“已在这台设备保存，联网后确认”，不把待确认解锁当作
+ * 跨设备永久资产。locked 显示剪影与下一目标，不展示未授权素材。
+ */
+import AppCard from "./AppCard.uvue";
+import { ResolvedTheme } from "../theme/ThemeTypes";
+
+export default {
+  components: { AppCard },
+  props: {
+    state: { type: String, default: "locked" },
+    title: { type: String, default: "" },
+    subtitle: { type: String, default: "" },
+    confirmed: { type: Boolean, default: false },
+    remainingDays: { type: Number, default: 0 },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  computed: {
+    titleStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).reward.title + ";";
+    },
+    subtitleStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).reward.subtitle + ";";
+    },
+    pendingStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      return "color:" + t.status.info.fg + ";background-color:" + t.status.info.bg
+        + ";font-size:14px;border-radius:12px;padding:8px;margin-top:8px;";
+    },
+    badgeStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      return "color:" + t.highlightFg + ";background-color:" + t.highlightBg
+        + ";font-size:14px;border-radius:12px;padding:4px 12px;margin-top:8px;";
+    },
+    silhouetteStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      return "background-color:" + t.surface.input
+        + ";border-color:" + t.border + ";";
+    },
+    silhouetteTextStyle(): string {
+      return "color:" + (this.theme as ResolvedTheme).text.tertiary + ";";
+    },
+  },
+};
+</script>
+
+<style>
+.reward {
+  margin-bottom: 16px;
+}
+.reward-body {
+  align-items: center;
+}
+.reward-title {
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.reward-silhouette {
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  border-width: 1px;
+  border-style: solid;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+</style>

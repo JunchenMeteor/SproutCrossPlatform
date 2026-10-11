@@ -1,0 +1,135 @@
+<template>
+  <view class="recorder" :style="panelStyle">
+    <text class="recorder-duration" :style="durationStyle">
+      {{ durationText }}
+    </text>
+    <text v-if="stateText.length > 0" class="recorder-state" :style="stateStyle">
+      {{ stateText }}
+    </text>
+    <view class="recorder-actions">
+      <AppButton
+        v-if="state === 'idle' || state === 'recorded' || state === 'error'"
+        :label="state === 'recorded' ? '重录' : '开始录音'"
+        kind="primary"
+        size="large"
+        :theme="theme"
+        @action="onStart"
+      />
+      <AppButton
+        v-if="state === 'recording'"
+        label="结束录音"
+        kind="primary"
+        size="large"
+        :theme="theme"
+        @action="onStop"
+      />
+      <AppButton
+        v-if="state === 'interrupted'"
+        label="重新录音"
+        kind="secondary"
+        size="large"
+        :theme="theme"
+        @action="onStart"
+      />
+    </view>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 录音面板组件：state/duration/record/stop/retry。录音执行交给注入的
+ * RecorderAdapter，组件不直接访问平台 API；时长显示真实 session 时间，
+ * 不假波形。录音中面板用 recording.active 配色（error 色系），中断时提示
+ * 片段须确认重录，不自动提交损坏文件。
+ */
+import AppButton from "./AppButton.uvue";
+import { ResolvedTheme } from "../theme/ThemeTypes";
+import { RecorderState } from "../platform/PlatformTypes";
+
+export default {
+  components: { AppButton },
+  props: {
+    state: { type: String as PropType<RecorderState>, default: "idle" },
+    durationMs: { type: Number, default: 0 },
+    errorMessage: { type: String, default: "" },
+    theme: { type: Object as PropType<ResolvedTheme>, required: true },
+  },
+  emits: ["start", "stop"],
+  computed: {
+    durationText(): string {
+      const totalSeconds = Math.floor(this.durationMs / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      const pad = seconds < 10 ? "0" + seconds : "" + seconds;
+      return minutes + ":" + pad;
+    },
+    stateText(): string {
+      if (this.state === "recording") {
+        return "录音中，再按一次结束";
+      }
+      if (this.state === "interrupted") {
+        return "录音被打断，请重新录这一题";
+      }
+      if (this.state === "error") {
+        return this.errorMessage.length > 0 ? this.errorMessage : "录音失败，请重试";
+      }
+      if (this.state === "recorded") {
+        return "录好了，可以先回放再提交";
+      }
+      return "";
+    },
+    panelStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      if (this.state === "recording") {
+        const r = t.recording;
+        return "background-color:" + r.activeBg + ";border-color:"
+          + r.activeBorder + ";";
+      }
+      return "background-color:" + t.recording.idleBg
+        + ";border-color:" + t.recording.idleBorder + ";";
+    },
+    durationStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      const color = this.state === "recording"
+        ? t.recording.activeFg : t.text.primary;
+      return "color:" + color + ";";
+    },
+    stateStyle(): string {
+      const t = this.theme as ResolvedTheme;
+      const color = this.state === "recording"
+        ? t.recording.activeFg : t.text.secondary;
+      return "color:" + color + ";";
+    },
+  },
+  methods: {
+    onStart(): void {
+      this.$emit("start");
+    },
+    onStop(): void {
+      this.$emit("stop");
+    },
+  },
+};
+</script>
+
+<style>
+.recorder {
+  align-items: center;
+  border-radius: 20px;
+  border-width: 1px;
+  border-style: solid;
+  padding: 24px;
+}
+.recorder-duration {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.recorder-state {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.recorder-actions {
+  flex-direction: row;
+  justify-content: center;
+}
+</style>
