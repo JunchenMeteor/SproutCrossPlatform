@@ -41,7 +41,7 @@
 | 微信小程序 | ✅ 编译通过（HBuilderX 5.26，8页面+10组件，样式隔离2.0） | 未验证（需微信开发者工具，本机未安装） | 未验证 | 未验证 | 未验证 | 运行/录音/权限验证受阻：无微信开发者工具 |
 | Web | ✅ 编译通过（HBuilderX 5.26.2026091802，uni-app x VDOM） | ✅ 运行+录音开始已验：页面渲染、路由、tabBar、主题即时切换（晴空蓝→午夜晴空）、MediaRecorder 录音启动与真实计时、recording.active 配色生效 | 浏览器麦克风授权成功 | N/A（登录未定） | 主题切换/离线切换已验 | 截图证据 docs/progress/evidence/web-*.png；录音激活后自动化点击超时（工具限制），停止/回放/提交待人工或他法复验 |
 | Android | ✅ Kotlin 编译通过（HBuilderX 5.26，VDOM，compile-only） | 未验证（无设备/模拟器） | 未验证 | 未验证 | 未验证 | 编译期修复9处真实跨端问题（UTS类型/API差异）；运行需 Android 设备 |
-| HarmonyOS NEXT（原生） | 未验证 | 未验证 | 未验证 | 未验证 | 未验证 | 工具链缺失；不得以 Android APK 代替 |
+| HarmonyOS NEXT（原生） | ❌ 受阻：HBuilderX 报“未检测到鸿蒙工具链”，需 DevEco Studio | 未验证 | 未验证 | 未验证 | 未验证 | 需 DevEco Studio + 鸿蒙设备/模拟器；不得以 Android APK 代替（证据 harmony-compile-1.log） |
 
 ## 4. 契约与接口边界
 
@@ -65,9 +65,9 @@
 
 1. HBuilderX/CLI 安装与固定版本、编译模式核对。
 2. 四端逐一编译与运行验证（第3节矩阵）。
-3. 主题十套在真实界面逐端核对（弹层同步、动态字号、减少动态效果）。
-4. Web 录音独立实现与浏览器权限/quota 验证。
-5. 原生 HarmonyOS NEXT 独立安装/运行验收。
+3. 主题十套在真实界面逐端核对（弹层同步、动态字号、减少动态效果）；Web 已验晴空蓝/午夜晴空切换。
+4. 微信开发者工具安装后做小程序运行/录音/权限验证；Android 设备或模拟器做运行验证；DevEco Studio + 鸿蒙设备做原生鸿蒙验证。
+5. Web 录音停止/回放/提交复验：自动化工具在 MediaRecorder 激活时点击派发超时（工具限制，页面 JS 正常），需人工或驱动级工具复验。
 6. 编码门禁流水线（formatter→空行归一→custom checker→lint/测试）未实现，当前为人工遵守。
 7. 后端联调（依赖 EC-API-0.1 冻结与后端仓库）。
 
