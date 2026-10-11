@@ -1,24 +1,129 @@
 <template>
-  <view class="page">
-    <text class="title">今日练习</text>
-    <text class="body">每日三入口：学了新内容 / 复习旧内容 / 没上课或不清楚（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">今天练什么？</text>
+    <AppButton
+      label="学了新内容"
+      kind="primary"
+      size="large"
+      :theme="theme"
+      @action="onNewLesson"
+    />
+    <AppButton
+      label="复习旧内容"
+      kind="secondary"
+      size="large"
+      :theme="theme"
+      @action="onReview"
+    />
+    <AppButton
+      label="没上课或不清楚"
+      kind="secondary"
+      size="large"
+      :theme="theme"
+      @action="onUnknown"
+    />
+    <text v-if="pendingCount > 0" class="hint" :style="hintStyle">
+      有 {{ pendingCount }} 条记录在这台设备上等待联网确认
+    </text>
+    <text class="hint" :style="hintStyle">演示内容：教材版本确认前使用原创小样</text>
+    <AppDialog
+      :open="confirmOpen"
+      title="家长确认"
+      confirmLabel="确认已学，开始练习"
+      cancelLabel="再想想"
+      :theme="theme"
+      @confirm="onConfirmNewLesson"
+      @cancel="onCancelConfirm"
+    >
+      <text :style="bodyStyle">
+        只有家长确认孩子学了新内容，才会推进课程进度。确认后将按下一课安排今天的练习。
+      </text>
+    </AppDialog>
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 今日练习页（tab）。仅组合业务状态与共用组件：三入口、当日计划摘要、
- * 进入练习。新课推进必须由家长确认，页面不自动判定下一课已学。
+ * 今日练习页（tab）：每日三入口。
+ * “学了新内容”必须经家长确认对话框才进入新课练习，点击入口本身不推进
+ * 已学范围（产品需求第2节）。待同步条数来自本机离线队列，仅作提示。
+ * 教材未确认前使用原创演示 fixture，并在页面明示。
  */
+import AppButton from "../../components/AppButton.uvue";
+import AppDialog from "../../components/AppDialog.uvue";
+import { getThemeStore, localDevAccountId } from "../../features/AppContext";
+import { SyncQueue } from "../../storage/SyncQueue";
+import {
+  getStorageValue,
+  setStorageValue,
+} from "../../platform/ThemeEnvAdapter";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { AppButton, AppDialog },
   data() {
-    return { title: "今日练习" };
-  }
+    return {
+      theme: null as ResolvedTheme | null,
+      confirmOpen: false,
+      pendingCount: 0,
+    };
+  },
+  onShow() {
+    this.theme = getThemeStore().getTheme();
+    const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+    queue.load();
+    this.pendingCount = queue.pendingCount();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    hintStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.tertiary + ";";
+    },
+    bodyStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";font-size:17px;";
+    },
+  },
+  methods: {
+    onNewLesson(): void {
+      this.confirmOpen = true;
+    },
+    onConfirmNewLesson(): void {
+      this.confirmOpen = false;
+      uni.navigateTo({ url: "/pages/practice/PracticePage?dayMode=new" });
+    },
+    onCancelConfirm(): void {
+      this.confirmOpen = false;
+    },
+    onReview(): void {
+      uni.navigateTo({ url: "/pages/practice/PracticePage?dayMode=review" });
+    },
+    onUnknown(): void {
+      uni.navigateTo({ url: "/pages/practice/PracticePage?dayMode=unknown" });
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 24px 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+.hint {
+  font-size: 14px;
+  margin-top: 16px;
+}
 </style>

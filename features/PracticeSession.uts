@@ -25,6 +25,8 @@ export type IdGenerator = () => string;
 
 export type Clock = () => string;
 
+export type SessionChangeCallback = () => void;
+
 export class PracticeSession {
   private recorder: RecorderAdapter;
   private files: FileAdapter;
@@ -35,6 +37,7 @@ export class PracticeSession {
   private plan: PracticePlanView | null = null;
   private state: SessionState = "loading";
   private currentIndex: number = 0;
+  private changeCallback: SessionChangeCallback | null = null;
 
   constructor(recorder: RecorderAdapter, files: FileAdapter, drafts: DraftStore,
     queue: SyncQueue, newId: IdGenerator, now: Clock) {
@@ -53,7 +56,20 @@ export class PracticeSession {
     });
     this.recorder.onError((error) => {
       this.state = "error";
+      this.notifyChange();
     });
+  }
+
+  /** 页面注册变更通知；每次状态/条目变化后触发，页面重新读取快照。 */
+  setOnChange(callback: SessionChangeCallback): void {
+    this.changeCallback = callback;
+  }
+
+  private notifyChange(): void {
+    const callback = this.changeCallback;
+    if (callback != null) {
+      callback();
+    }
   }
 
   /** 优先加载服务端已确认的 Plan 缓存；无缓存时由调用方决定是否用演示。 */
@@ -61,6 +77,7 @@ export class PracticeSession {
     this.plan = plan;
     this.currentIndex = 0;
     this.state = "ready";
+    this.notifyChange();
   }
 
   getSnapshot(): SessionSnapshot {
@@ -80,6 +97,7 @@ export class PracticeSession {
     }
     const item = plan.items[this.currentIndex];
     this.state = "recording";
+    this.notifyChange();
     this.recorder.start({
       maxDurationMs: Math.max(item.suggestedSeconds, 30) * 1000,
       sampleRate: 16000,
@@ -119,11 +137,13 @@ export class PracticeSession {
       this.drafts.saveDraft(attempt);
       this.queue.enqueueAttempt(attempt);
       this.state = "review";
+      this.notifyChange();
     }).catch((err) => {
       attempt.state = "failed";
       attempt.lastError = "录音保存失败";
       this.drafts.saveDraft(attempt);
       this.state = "error";
+      this.notifyChange();
     });
   }
 
@@ -148,6 +168,7 @@ export class PracticeSession {
     } else {
       this.state = "completing";
     }
+    this.notifyChange();
   }
 
   /** 完成基础计划：生成待同步打卡记录入队；不等待评测，不本地发奖。 */
@@ -182,6 +203,7 @@ export class PracticeSession {
     } as PendingCheckIn;
     this.queue.enqueueCheckIn(checkIn);
     this.state = "done";
+    this.notifyChange();
     return checkIn;
   }
 }

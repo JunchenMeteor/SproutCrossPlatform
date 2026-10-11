@@ -1,0 +1,27 @@
+/**
+ * 组合根访问器：页面经此取得 App 级共享实例（ThemeStore 等）。
+ * App.uvue onLaunch 为唯一组合根；本模块只做读取与懒初始化兜底，
+ * 不在页面层新建全局可变服务。登录方式未定前使用明示的本机开发身份
+ * （local-dev / local-child），不得用于生产或正式联调验收。
+ */
+import { ThemeStore } from "../theme/ThemeStore";
+import {
+  getStorageValue,
+  isSystemDarkMode,
+  setStorageValue,
+} from "../platform/ThemeEnvAdapter";
+
+export const localDevAccountId = "local-dev";
+
+export const localDevChildId = "local-child";
+
+export function getThemeStore(): ThemeStore {
+  const app = getApp();
+  let store = app.globalData["themeStore"] as ThemeStore | null;
+  if (store == null) {
+    store = new ThemeStore(getStorageValue, setStorageValue, isSystemDarkMode);
+    store.load();
+    app.globalData["themeStore"] = store;
+  }
+  return store;
+}

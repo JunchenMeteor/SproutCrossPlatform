@@ -1,25 +1,92 @@
 <template>
-  <view class="page">
-    <text class="title">完成</text>
-    <text class="body">打卡结果、坦克奖励与下一解锁目标（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">今天的基础练习完成了！</text>
+    <text :style="bodyStyle">具体表扬和奖励确认后展示；反馈未完成不影响打卡。</text>
+    <RewardCard
+      state="pending"
+      title="今日收藏零件"
+      :confirmed="false"
+      :theme="theme"
+    />
+    <text :style="infoStyle">已在这台设备保存，联网后确认</text>
+    <AppButton
+      label="再玩一关"
+      kind="secondary"
+      size="large"
+      :theme="theme"
+      @action="onExtra"
+    />
+    <AppButton
+      label="回到今日练习"
+      kind="primary"
+      size="large"
+      :theme="theme"
+      @action="onBack"
+    />
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 完成页。基础题完成即打卡；评测未完成/失败显示“反馈稍后送达”，不挡打卡。
- * 奖励服务端确认保存后才播动画（可跳过、减少动态效果有静态替代）；
- * 离线显示“已在这台设备保存，联网后确认”，不把待确认解锁当永久资产。
+ * 完成页：基础题完成即打卡。离线/未联调时奖励只显示暂存（pending），
+ * 展示“已在这台设备保存，联网后确认”，不把待确认解锁当作跨设备永久资产；
+ * 评测未完成或失败显示“反馈稍后送达”。奖励动画在服务端确认后播放，
+ * 可跳过，减少动态效果时用静态替代。
  */
+import AppButton from "../../components/AppButton.uvue";
+import RewardCard from "../../components/RewardCard.uvue";
+import { getThemeStore } from "../../features/AppContext";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { AppButton, RewardCard },
   data() {
-    return { title: "完成" };
-  }
+    return { theme: null as ResolvedTheme | null };
+  },
+  onShow() {
+    this.theme = getThemeStore().getTheme();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    bodyStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary + ";font-size:17px;margin-bottom:16px;";
+    },
+    infoStyle(): string {
+      const t = this.theme;
+      if (t == null) {
+        return "";
+      }
+      return "color:" + t.status.info.fg + ";background-color:"
+        + t.status.info.bg + ";font-size:14px;border-radius:12px;"
+        + "padding:8px 12px;margin:16px 0;";
+    },
+  },
+  methods: {
+    onExtra(): void {
+      uni.redirectTo({ url: "/pages/practice/PracticePage?dayMode=review" });
+    },
+    onBack(): void {
+      uni.switchTab({ url: "/pages/today/TodayPage" });
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 24px 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
 </style>

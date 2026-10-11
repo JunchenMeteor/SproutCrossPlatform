@@ -1,0 +1,21 @@
+/**
+ * 业务日期工具：targetDate 为 YYYY-MM-DD 业务日期，建议固定 Asia/Shanghai
+ * （UTC+8，无夏令时）。不能从设备当前时区直接推断；换时区不改变既有
+ * 目标日期。服务端为权威，本工具仅用于本地展示与离线排程。
+ */
+
+/** 按固定 UTC+8 计算当前业务日期。 */
+export function todayTargetDate(): string {
+  const shifted = new Date(Date.now() + 8 * 3600 * 1000);
+  const year = shifted.getUTCFullYear();
+  const month = shifted.getUTCMonth() + 1;
+  const day = shifted.getUTCDate();
+  const mm = month < 10 ? "0" + month : "" + month;
+  const dd = day < 10 ? "0" + day : "" + day;
+  return year + "-" + mm + "-" + dd;
+}
+
+/** 当前 UTC 时间 ISO-8601，用于 clientCompletedAt 客户端声明。 */
+export function nowUtcIso(): string {
+  return new Date(Date.now()).toISOString();
+}

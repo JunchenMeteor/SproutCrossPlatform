@@ -1,25 +1,243 @@
 <template>
-  <view class="page">
-    <text class="title">练习题</text>
-    <text class="body">听示范 → 按键录音 → 回放/重录/提交 → 一个关键改进点（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text v-if="!planConfirmed" class="demo-banner" :style="demoBannerStyle">
+      演示内容：教材版本确认前使用原创小样
+    </text>
+    <view v-if="currentItem != null" class="practice">
+      <text class="prompt" :style="titleStyle">{{ currentItem.prompt }}</text>
+      <text
+        v-if="currentItem.referenceText != null"
+        class="english"
+        :style="englishStyle"
+      >{{ currentItem.referenceText }}</text>
+      <RecorderPanel
+        :state="recorderState"
+        :durationMs="durationMs"
+        :theme="theme"
+        @start="onStartRecord"
+        @stop="onStopRecord"
+      />
+      <view v-if="hasRecording" class="actions">
+        <AppButton
+          label="回放"
+          kind="secondary"
+          :theme="theme"
+          @action="onPlay"
+        />
+        <AppButton
+          label="提交，下一题"
+          kind="primary"
+          :theme="theme"
+          @action="onSubmitNext"
+        />
+      </view>
+      <AppButton
+        v-if="!hasRecording"
+        label="跳过这题"
+        kind="link"
+        :theme="theme"
+        @action="onSkip"
+      />
+    </view>
+    <view v-if="finished" class="practice">
+      <text class="prompt" :style="titleStyle">基础练习完成！</text>
+      <AppButton
+        label="去看看成果"
+        kind="primary"
+        size="large"
+        :theme="theme"
+        @action="onFinish"
+      />
+    </view>
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 练习题页。组合 Recorder/Feedback 组件与练习用例状态；录音、回放、权限
- * 经 platform adapter 注入，页面不写平台条件。跟读显示参考句，自由表达显示
- * 主题提示；不诱导儿童提供真实姓名、学校、位置。
+ * 练习题页：组合 RecorderPanel/AppButton 与 PracticeSession 用例。
+ * 听示范 → 按键录音 → 回放/重录/提交 → 下一短题；时长来自真实录音会话。
+ * 录音/播放/文件经 platform adapter，页面不含平台条件。跳过原因枚举待
+ * 后端 completionPolicy 冻结，当前只记录 skipped 事实。演示 fixture 已标注。
  */
+import AppButton from "../../components/AppButton.uvue";
+import RecorderPanel from "../../components/RecorderPanel.uvue";
+import {
+  getThemeStore,
+  localDevAccountId,
+  localDevChildId,
+} from "../../features/AppContext";
+import { nowUtcIso, todayTargetDate } from "../../features/BusinessDate";
+import { buildDemoPlan } from "../../features/DemoFixtures";
+import { PracticeItemView } from "../../features/FeatureTypes";
+import { PracticeSession } from "../../features/PracticeSession";
+import { createAudioPlayerAdapter } from "../../platform/AudioPlayerAdapter";
+import { createFileAdapter } from "../../platform/FileAdapter";
+import { requestRecordPermission } from "../../platform/PermissionAdapter";
+import { RecorderState } from "../../platform/PlatformTypes";
+import { createRecorderAdapter } from "../../platform/RecorderAdapter";
+import {
+  getStorageValue,
+  setStorageValue,
+} from "../../platform/ThemeEnvAdapter";
+import { DraftStore } from "../../storage/DraftStore";
+import { SyncQueue } from "../../storage/SyncQueue";
+import { newUuid } from "../../services/ClientContextProvider";
+import { ResolvedTheme } from "../../theme/ThemeTypes";
+
 export default {
+  components: { AppButton, RecorderPanel },
   data() {
-    return { title: "练习题" };
-  }
+    return {
+      theme: null as ResolvedTheme | null,
+      session: null as PracticeSession | null,
+      currentItem: null as PracticeItemView | null,
+      recorderState: "idle" as RecorderState,
+      durationMs: 0,
+      recordStartedAt: 0,
+      durationTimer: 0,
+      hasRecording: false,
+      finished: false,
+      planConfirmed: false,
+    };
+  },
+  onLoad() {
+    this.theme = getThemeStore().getTheme();
+    const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+    queue.load();
+    const drafts = new DraftStore(getStorageValue, setStorageValue,
+      (key: string) => uni.removeStorageSync(key));
+    const session = new PracticeSession(
+      createRecorderAdapter(), createFileAdapter(), drafts, queue,
+      () => newUuid(), () => nowUtcIso());
+    session.setOnChange(() => this.onSessionChange());
+    const plan = buildDemoPlan(localDevChildId, todayTargetDate());
+    this.planConfirmed = plan.confirmed;
+    session.loadPlan(plan);
+    this.session = session;
+  },
+  onUnload() {
+    this.stopDurationTimer();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    englishStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    demoBannerStyle(): string {
+      const t = this.theme;
+      if (t == null) {
+        return "";
+      }
+      return "color:" + t.status.info.fg + ";background-color:"
+        + t.status.info.bg + ";";
+    },
+  },
+  methods: {
+    onSessionChange(): void {
+      const session = this.session;
+      if (session == null) {
+        return;
+      }
+      const snapshot = session.getSnapshot();
+      const plan = snapshot.plan;
+      if (plan != null && snapshot.currentIndex < plan.items.length) {
+        this.currentItem = plan.items[snapshot.currentIndex];
+      }
+      const item = this.currentItem;
+      this.hasRecording = item != null && item.attempt != null;
+      this.recorderState = snapshot.state === "recording"
+        ? "recording"
+        : (this.hasRecording ? "recorded" : "idle");
+      if (snapshot.state === "completing") {
+        session.completePlan();
+        this.finished = true;
+      }
+    },
+    onStartRecord(): void {
+      requestRecordPermission().then((status) => {
+        if (status === "denied") {
+          uni.showToast({ title: "需要麦克风权限才能录音", icon: "none" });
+          return;
+        }
+        this.hasRecording = false;
+        this.recordStartedAt = Date.now();
+        this.startDurationTimer();
+        this.session?.startRecording();
+      });
+    },
+    onStopRecord(): void {
+      this.stopDurationTimer();
+      this.session?.stopRecording();
+    },
+    onPlay(): void {
+      const item = this.currentItem;
+      const attempt = item != null ? item.attempt : null;
+      const ref = attempt != null ? attempt.recordingRef : null;
+      if (ref != null && ref.persistedPath.length > 0) {
+        createAudioPlayerAdapter().play(ref.persistedPath);
+      }
+    },
+    onSubmitNext(): void {
+      this.hasRecording = false;
+      this.durationMs = 0;
+      this.session?.moveNext();
+    },
+    onSkip(): void {
+      /* skipReason 枚举待后端 completionPolicy 冻结；当前记录 skipped 事实。 */
+      this.session?.skipItem("");
+    },
+    onFinish(): void {
+      uni.redirectTo({ url: "/pages/complete/CompletePage" });
+    },
+    startDurationTimer(): void {
+      this.durationTimer = setInterval(() => {
+        this.durationMs = Date.now() - this.recordStartedAt;
+      }, 500);
+    },
+    stopDurationTimer(): void {
+      if (this.durationTimer !== 0) {
+        clearInterval(this.durationTimer);
+        this.durationTimer = 0;
+      }
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 16px;
+}
+.demo-banner {
+  font-size: 14px;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+.practice {
+  flex: 1;
+}
+.prompt {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.english {
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+.actions {
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
 </style>

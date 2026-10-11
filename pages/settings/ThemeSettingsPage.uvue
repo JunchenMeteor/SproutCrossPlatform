@@ -1,25 +1,169 @@
 <template>
-  <view class="page">
-    <text class="title">主题设置</text>
-    <text class="body">五配色组 × system/light/dark（待实现）</text>
+  <view class="page" :style="pageStyle">
+    <text class="title" :style="titleStyle">主题设置</text>
+    <text class="section" :style="sectionStyle">配色组</text>
+    <view
+      v-for="(group, index) in groups"
+      :key="index"
+      class="option"
+      :style="optionStyle(group.key === currentGroup)"
+      @click="selectGroup(group.key)"
+    >
+      <text :style="textStyle">{{ group.name }}</text>
+      <text v-if="group.key === currentGroup" :style="checkStyle">已选</text>
+    </view>
+    <text class="section" :style="sectionStyle">模式</text>
+    <view
+      v-for="(mode, index) in modes"
+      :key="index"
+      class="option"
+      :style="optionStyle(mode.key === currentMode)"
+      @click="selectMode(mode.key)"
+    >
+      <text :style="textStyle">{{ mode.name }}</text>
+      <text v-if="mode.key === currentMode" :style="checkStyle">已选</text>
+    </view>
+    <text class="hint" :style="hintStyle">
+      主题只保存在这台设备上，断网也能切换。当前主题：{{ currentThemeName }}
+    </text>
   </view>
 </template>
 
 <script lang="uts">
 /**
- * 主题设置页。五配色组（sky/mist/lavender/peach/lemon）与三模式选择，
- * 按设备保存、断网可切；切换后已打开弹层与页面同步更新。
- * 默认 sky/system（暖白浅蓝 B / 午夜晴空）。
+ * 主题设置页：五配色组 × system/light/dark 三模式。
+ * 选择立即写入 ThemeStore（设备本地存储）并刷新本页；默认 sky/system
+ * （暖白浅蓝 B / 午夜晴空）。已打开页面在返回时经 onShow 重新读取主题。
  */
+import { getThemeStore } from "../../features/AppContext";
+import {
+  ResolvedTheme,
+  ThemeGroupKey,
+  ThemeModePreference,
+} from "../../theme/ThemeTypes";
+
+type GroupOption = { key: ThemeGroupKey; name: string };
+
+type ModeOption = { key: ThemeModePreference; name: string };
+
 export default {
   data() {
-    return { title: "主题设置" };
-  }
+    const groups: GroupOption[] = [
+      { key: "sky", name: "晴空蓝 / 午夜晴空（默认）" },
+      { key: "mist", name: "雾蓝晨光 / 深海星光" },
+      { key: "lavender", name: "薰衣草 / 紫夜银河" },
+      { key: "peach", name: "蜜桃奶油 / 琥珀夜色" },
+      { key: "lemon", name: "柠檬晴日 / 石墨冰蓝" },
+    ];
+    const modes: ModeOption[] = [
+      { key: "system", name: "跟随系统" },
+      { key: "light", name: "浅色" },
+      { key: "dark", name: "深色" },
+    ];
+    return {
+      groups: groups,
+      modes: modes,
+      currentGroup: "sky" as ThemeGroupKey,
+      currentMode: "system" as ThemeModePreference,
+      currentThemeName: "",
+      theme: getThemeStore().getTheme() as ResolvedTheme | null,
+    };
+  },
+  onShow() {
+    this.refreshFromStore();
+  },
+  computed: {
+    pageStyle(): string {
+      const t = this.theme;
+      if (t == null) {
+        return "";
+      }
+      return "background-color:" + t.surface.page + ";";
+    },
+    titleStyle(): string {
+      return "color:" + this.themeText().primary + ";";
+    },
+    sectionStyle(): string {
+      return "color:" + this.themeText().secondary + ";";
+    },
+    textStyle(): string {
+      return "color:" + this.themeText().primary + ";";
+    },
+    checkStyle(): string {
+      const t = this.theme;
+      return "color:" + (t != null ? t.link : "") + ";font-size:14px;";
+    },
+    hintStyle(): string {
+      return "color:" + this.themeText().tertiary + ";";
+    },
+  },
+  methods: {
+    themeText(): { primary: string; secondary: string; tertiary: string } {
+      const t = this.theme;
+      if (t == null) {
+        return { primary: "", secondary: "", tertiary: "" };
+      }
+      return t.text;
+    },
+    optionStyle(selected: boolean): string {
+      const t = this.theme;
+      if (t == null) {
+        return "";
+      }
+      if (selected) {
+        return "background-color:" + t.selectionBg
+          + ";border-color:" + t.selectionBorder + ";";
+      }
+      return "background-color:" + t.surface.card
+        + ";border-color:" + t.border + ";";
+    },
+    refreshFromStore(): void {
+      const store = getThemeStore();
+      const preference = store.getPreference();
+      this.currentGroup = preference.group;
+      this.currentMode = preference.mode;
+      this.currentThemeName = store.getDefinition().displayName;
+      this.theme = store.getTheme();
+    },
+    selectGroup(key: ThemeGroupKey): void {
+      getThemeStore().setGroup(key);
+      this.refreshFromStore();
+    },
+    selectMode(key: ThemeModePreference): void {
+      getThemeStore().setMode(key);
+      this.refreshFromStore();
+    },
+  },
 };
 </script>
 
 <style>
-.page { flex: 1; padding: 16px; }
-.title { font-size: 28px; margin-bottom: 12px; }
-.body { font-size: 17px; }
+.page {
+  flex: 1;
+  padding: 16px;
+}
+.title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.section {
+  font-size: 22px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+.option {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  border-radius: 12px;
+  border-width: 1px;
+  border-style: solid;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+.hint {
+  font-size: 14px;
+  margin-top: 16px;
+}
 </style>

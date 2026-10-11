@@ -18,6 +18,7 @@
 | 本地存储与离线 | 源码完成（未运行） | storage/：SyncQueue（按账号隔离、稳定 UUID、重试不新建条目）、DraftStore（草稿 + 服务端已确认 Plan 离线缓存，无缓存不承诺离线打卡） |
 | 平台 adapter | 源码完成（未编译） | platform/：RecorderAdapter 契约+工厂、UniRecorderAdapter（小程序/Android/鸿蒙）、WebRecorderAdapter（MediaRecorder 单独实现）、PermissionAdapter、FileAdapter（临时录音转存）、AudioPlayerAdapter；均标注逐端实测要求 |
 | 业务用例 features/ | 源码完成（未运行） | PracticeSession（计划加载/逐题录音/草稿/完成入队，评测不是打卡前提）、SyncEngine（仅调 EC-API-0.1 已定义端点，未联调）、DemoFixtures（原创演示小样，明确标注不冒充课本） |
+| 页面组合 | 核心页已接线（未运行） | 今日三入口（新课须家长确认对话框）、练习页（RecorderPanel+PracticeSession+回放+演示标注）、完成页（离线暂存诚实提示）、主题设置页（五组×三模式，设备本地保存）；日历/收藏馆/家长/记录详情仍为骨架，待后端数据 |
 | 四端验证 | 未开始 | 见第3节平台矩阵 |
 
 ## 2. 工具链现状与限制
@@ -63,10 +64,10 @@
 
 ## 6. 断点续跑
 
-- 上次完成：uni-app x 工程骨架（manifest/pages.json/main.uts/App.uvue/8 页面骨架）、
-  主题系统源码（ThemeTypes/ThemeTokens/ThemeStore + ThemeEnvAdapter），色值核对通过。
-- 下次入口：platform/ 录音/播放/文件/权限 adapter → components/ 共用组件 →
-  storage/ 草稿与待同步队列 → services/ RequestClient 骨架 → 页面业务组合。
+- 上次完成：features 业务用例层与核心页面接线（今日/练习/完成/主题设置），
+  演示 fixture 全流程可走通（未编译运行）。
+- 下次入口：安装 HBuilderX 固定版本后逐端编译验证（第3节矩阵）；随后补
+  日历/收藏馆/家长/记录详情页与后端联调（依赖契约冻结）。
 - 续跑前先读 AGENTS.md 阅读顺序与本文件第5节未完成项。
 - 待核对：manifest.json 平台段键名（app/app-harmony/h5）需对照所装 HBuilderX 版本
   校验；pages.json tabBar 为静态默认 SkyLight 配色，运行时主题只覆盖页面内容，

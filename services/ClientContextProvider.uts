@@ -37,7 +37,8 @@ export function getClientPlatform(): ClientPlatform {
   return "unknown";
 }
 
-function newUuid(): string {
+/** 随机 UUID（本地 ID/幂等键/安装实例用）；不含个人信息，非加密用途。 */
+export function newUuid(): string {
   const pattern = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
   let result = "";
   for (let i = 0; i < pattern.length; i++) {
