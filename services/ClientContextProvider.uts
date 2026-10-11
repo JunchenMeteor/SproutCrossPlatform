@@ -1,0 +1,108 @@
+/**
+ * 客户端来源上下文提供者（ClientContext.md 第2节）。
+ * 统一网络模块由此注入 X-Client-* headers；页面不得逐接口拼装。
+ * 未知值不猜测：系统版本取不到则不发送；installationId/clientSessionId 为
+ * 随机 UUID，不是硬件身份、账号或认证令牌。
+ */
+export type ClientPlatform =
+  "wechatMiniProgram" | "web" | "android" | "harmonyos" | "unknown";
+
+export type ClientContext = {
+  clientType: string;
+  clientPlatform: ClientPlatform;
+  appVersion: string;
+  appBuild: string;
+  osVersion: string | null;
+  installationId: string | null;
+  clientSessionId: string | null;
+  contractVersion: string;
+};
+
+export const contractVersion = "EC-API-0.1";
+
+/** 编译平台 → 契约枚举；原生鸿蒙不填 android，取不到时记 unknown。 */
+export function getClientPlatform(): ClientPlatform {
+  // #ifdef MP-WEIXIN
+  return "wechatMiniProgram";
+  // #endif
+  // #ifdef H5
+  return "web";
+  // #endif
+  // #ifdef APP-HARMONY
+  return "harmonyos";
+  // #endif
+  // #ifdef APP-ANDROID
+  return "android";
+  // #endif
+  return "unknown";
+}
+
+function newUuid(): string {
+  const pattern = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+  let result = "";
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === "x" || c === "y") {
+      const r = Math.floor(Math.random() * 16);
+      const v = c === "x" ? r : (r % 4) + 8;
+      result += v.toString(16);
+    } else {
+      result += c;
+    }
+  }
+  return result;
+}
+
+const storageKeyInstallationId = "installationId";
+
+export class ClientContextProvider {
+  private context: ClientContext;
+
+  constructor(
+    appVersion: string,
+    appBuild: string,
+    storageGet: (key: string) => string | null,
+    storageSet: (key: string, value: string) => void,
+  ) {
+    const stored = storageGet(storageKeyInstallationId);
+    const installationId = stored != null ? stored : newUuid();
+    if (stored == null) {
+      storageSet(storageKeyInstallationId, installationId);
+    }
+    this.context = {
+      clientType: "uniAppX",
+      clientPlatform: getClientPlatform(),
+      appVersion: appVersion,
+      appBuild: appBuild,
+      osVersion: this.detectOsVersion(),
+      installationId: installationId,
+      clientSessionId: newUuid(),
+      contractVersion: contractVersion,
+    } as ClientContext;
+  }
+
+  /** Web 不依赖 UA 冒充系统识别，取不到返回 null（不发送该 header）。 */
+  private detectOsVersion(): string | null {
+    // #ifdef H5
+    return null;
+    // #endif
+    // #ifndef H5
+    const info = uni.getSystemInfoSync();
+    const name = info.osName ?? "";
+    const version = info.osVersion ?? "";
+    if (name.length > 0 && version.length > 0) {
+      return name + "/" + version;
+    }
+    return null;
+    // #endif
+  }
+
+  getContext(): ClientContext {
+    return this.context;
+  }
+
+  /** 每次业务修改命令生成新的幂等键；重试沿用同一个键。 */
+  newIdempotencyKey(): string {
+    return newUuid();
+  }
+}

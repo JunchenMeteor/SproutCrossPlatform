@@ -1,0 +1,69 @@
+/**
+ * 练习草稿与离线计划缓存。
+ * 草稿按 childId 隔离持久化；离线继续正式练习的前提是已有完整缓存的
+ * 服务端 Plan 快照（技术设计第2节），首次启动无计划或未联网确认的新课
+ * 不承诺离线打卡。缓存只保存服务端已确认的 Plan 原文，不由客户端合成。
+ */
+import { CachedPlan, LocalAttempt } from "./StorageTypes";
+
+function draftKey(childId: string, itemId: string): string {
+  return "sprout.draft." + childId + "." + itemId;
+}
+
+function planCacheKey(childId: string, targetDate: string): string {
+  return "sprout.planCache." + childId + "." + targetDate;
+}
+
+export class DraftStore {
+  private storageGet: (key: string) => string | null;
+  private storageSet: (key: string, value: string) => void;
+  private storageRemove: (key: string) => void;
+
+  constructor(
+    storageGet: (key: string) => string | null,
+    storageSet: (key: string, value: string) => void,
+    storageRemove: (key: string) => void,
+  ) {
+    this.storageGet = storageGet;
+    this.storageSet = storageSet;
+    this.storageRemove = storageRemove;
+  }
+
+  saveDraft(attempt: LocalAttempt): void {
+    this.storageSet(draftKey(attempt.childId, attempt.itemId), JSON.stringify(attempt));
+  }
+
+  loadDraft(childId: string, itemId: string): LocalAttempt | null {
+    const raw = this.storageGet(draftKey(childId, itemId));
+    if (raw == null) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw) as LocalAttempt;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  removeDraft(childId: string, itemId: string): void {
+    this.storageRemove(draftKey(childId, itemId));
+  }
+
+  /** 缓存服务端已确认 Plan；仅联网确认后调用，离线不伪造计划。 */
+  cachePlan(plan: CachedPlan): void {
+    this.storageSet(planCacheKey(plan.childId, plan.targetDate), JSON.stringify(plan));
+  }
+
+  /** 读取离线可用的 Plan 快照；无缓存返回 null，界面提示需联网。 */
+  loadCachedPlan(childId: string, targetDate: string): CachedPlan | null {
+    const raw = this.storageGet(planCacheKey(childId, targetDate));
+    if (raw == null) {
+      return null;
+    }
+    try {
+      return JSON.parse(raw) as CachedPlan;
+    } catch (e) {
+      return null;
+    }
+  }
+}

@@ -1,0 +1,58 @@
+/**
+ * 本地存储类型：草稿、待同步尝试与打卡队列。
+ * 本地练习状态机（技术设计第4节）：draft → recorded → queued → syncing →
+ * confirmed；失败保留 failed/retryable。离线 ID 为客户端稳定 UUID，重放不变；
+ * localAttemptId 必须与后续 clientAttemptId 相同，不产生第二次打卡或发奖。
+ * clientCompletedAt 仅为客户端声明，不等于服务端确认时间。
+ */
+import { StoredFileRef } from "../platform/PlatformTypes";
+
+export type LocalAttemptState =
+  "draft" | "recorded" | "queued" | "syncing" | "confirmed" | "failed";
+
+export type LocalAttempt = {
+  clientAttemptId: string;
+  childId: string;
+  planId: string | null;
+  itemId: string;
+  state: LocalAttemptState;
+  recordingRef: StoredFileRef | null;
+  /** 客户端声明完成时间，UTC ISO-8601；服务端 confirmedAt 另算。 */
+  clientCompletedAt: string | null;
+  retryable: boolean;
+  lastError: string | null;
+};
+
+export type LocalItemOutcome = {
+  itemId: string;
+  outcome: string;
+  /** 离线项无服务器 attemptId，用 localAttemptId 关联待上传记录。 */
+  localAttemptId: string | null;
+  skipReason: string | null;
+};
+
+export type PendingCheckInState = "queued" | "syncing" | "confirmed" | "failed";
+
+export type PendingCheckIn = {
+  clientCompletionId: string;
+  childId: string;
+  planId: string | null;
+  targetDate: string;
+  clientCompletedAt: string;
+  itemOutcomes: LocalItemOutcome[];
+  state: PendingCheckInState;
+  retryable: boolean;
+  lastError: string | null;
+};
+
+/** 离线计划缓存：保存服务端已确认 Plan 的原始快照与元数据，不展开未冻结字段。 */
+export type CachedPlan = {
+  planId: string;
+  childId: string;
+  targetDate: string;
+  revision: number;
+  dayMode: string;
+  /** 服务端返回的完整 Plan JSON 原文；契约冻结前不逐字段展开。 */
+  rawJson: string;
+  cachedAt: string;
+};

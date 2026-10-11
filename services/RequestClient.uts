@@ -1,0 +1,172 @@
+/**
+ * 统一网络客户端：所有 App API 请求（JSON、multipart 上传、轮询、导出、登录）
+ * 经本模块附加 ClientContext headers，页面不逐接口拼装（ClientContext.md 第1节）。
+ * 只对本 App API 域名注入 Authorization 与自定义 headers；预签名第三方下载
+ * 使用 downloadExternal，不附带任何 App 凭据。
+ * 契约信封遵循 EC-API-0.1：X-Contract-Version、错误体 error/code/retryable、
+ * requestId 与 X-Request-Id 一致；非 JSON 网关错误安全降级，不伪造包体。
+ * 本骨架不定义任何业务端点；业务 API 待契约缺口冻结后按后端 canonical schema 添加。
+ */
+import { ClientContext, ClientContextProvider } from "./ClientContextProvider";
+
+export type RequestResult = {
+  statusCode: number;
+  /** 非 JSON 响应（网关错误等）为 null，调用方按 statusCode 安全降级。 */
+  body: UTSJSONObject | null;
+  rawText: string;
+  /** X-Request-Id 优先，其次 body.requestId；均缺失为 null。 */
+  requestId: string | null;
+};
+
+export type ApiError = {
+  code: string;
+  message: string;
+  retryable: boolean;
+  requestId: string | null;
+  httpStatus: number;
+};
+
+export type AccessTokenProvider = () => string | null;
+
+export class RequestClient {
+  private baseUrl: string;
+  private contextProvider: ClientContextProvider;
+  private tokenProvider: AccessTokenProvider;
+
+  constructor(
+    baseUrl: string,
+    contextProvider: ClientContextProvider,
+    tokenProvider: AccessTokenProvider,
+  ) {
+    this.baseUrl = baseUrl;
+    this.contextProvider = contextProvider;
+    this.tokenProvider = tokenProvider;
+  }
+
+  /** 组装 App API headers；osVersion/installationId 等可选项缺失不发送。 */
+  private buildHeaders(idempotencyKey: string | null): UTSJSONObject {
+    const context = this.contextProvider.getContext();
+    const headers = {} as UTSJSONObject;
+    headers["X-Client-Type"] = context.clientType;
+    headers["X-Client-Platform"] = context.clientPlatform;
+    headers["X-App-Version"] = context.appVersion;
+    headers["X-App-Build"] = context.appBuild;
+    headers["X-Contract-Version"] = context.contractVersion;
+    if (context.osVersion != null) {
+      headers["X-OS-Version"] = context.osVersion as string;
+    }
+    if (context.installationId != null) {
+      headers["X-Installation-Id"] = context.installationId as string;
+    }
+    if (context.clientSessionId != null) {
+      headers["X-Client-Session-Id"] = context.clientSessionId as string;
+    }
+    if (idempotencyKey != null) {
+      headers["Idempotency-Key"] = idempotencyKey;
+    }
+    const token = this.tokenProvider();
+    if (token != null) {
+      headers["Authorization"] = "Bearer " + token;
+    }
+    return headers;
+  }
+
+  private parseResult(statusCode: number, rawText: string,
+    headerRequestId: string | null): RequestResult {
+    let body: UTSJSONObject | null = null;
+    let requestId = headerRequestId;
+    try {
+      const parsed = JSON.parse(rawText);
+      if (parsed != null && typeof parsed === "object") {
+        body = parsed as UTSJSONObject;
+        if (requestId == null) {
+          const bodyRequestId = body["requestId"];
+          if (typeof bodyRequestId === "string") {
+            requestId = bodyRequestId as string;
+          }
+        }
+      }
+    } catch (e) {
+      body = null;
+    }
+    return { statusCode: statusCode, body: body, rawText: rawText,
+      requestId: requestId } as RequestResult;
+  }
+
+  /** JSON 请求；修改命令必须带 idempotencyKey，重试沿用同一键。 */
+  requestJson(method: string, path: string, body: UTSJSONObject | null,
+    idempotencyKey: string | null): Promise<RequestResult> {
+    return new Promise<RequestResult>((resolve, reject) => {
+      uni.request({
+        url: this.baseUrl + path,
+        method: method,
+        data: body ?? ({} as UTSJSONObject),
+        header: this.buildHeaders(idempotencyKey),
+        success: (res) => {
+          const headerId = res.header != null ? res.header["X-Request-Id"] : null;
+          const raw = typeof res.data === "string"
+            ? res.data as string
+            : JSON.stringify(res.data);
+          resolve(this.parseResult(res.statusCode, raw, headerId));
+        },
+        fail: (err) => reject(err),
+      });
+    });
+  }
+
+  /** multipart 整文件上传；边界由平台库生成，页面不伪造 Content-Type。 */
+  uploadFile(path: string, filePath: string, fields: UTSJSONObject,
+    idempotencyKey: string): Promise<RequestResult> {
+    return new Promise<RequestResult>((resolve, reject) => {
+      uni.uploadFile({
+        url: this.baseUrl + path,
+        filePath: filePath,
+        name: "file",
+        formData: fields,
+        header: this.buildHeaders(idempotencyKey),
+        success: (res) => {
+          const headerId = res.header != null ? res.header["X-Request-Id"] : null;
+          resolve(this.parseResult(res.statusCode, res.data, headerId));
+        },
+        fail: (err) => reject(err),
+      });
+    });
+  }
+
+  /** 预签名第三方/授权短效下载：不附带 App Authorization 与自定义 headers。 */
+  downloadExternal(url: string, targetPath: string): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      uni.downloadFile({
+        url: url,
+        filePath: targetPath,
+        success: (res) => resolve(res.statusCode),
+        fail: (err) => reject(err),
+      });
+    });
+  }
+}
+
+/** 把请求结果映射为业务可读错误；网关非 JSON 响应安全降级，不回显危险值。 */
+export function toApiError(result: RequestResult): ApiError {
+  const body = result.body;
+  if (body != null) {
+    const errorObj = body["error"];
+    if (errorObj != null && typeof errorObj === "object") {
+      const e = errorObj as UTSJSONObject;
+      return {
+        code: typeof e["code"] === "string" ? e["code"] as string : "UNKNOWN",
+        message: typeof e["message"] === "string" ? e["message"] as string : "",
+        retryable: e["retryable"] === true,
+        requestId: result.requestId,
+        httpStatus: result.statusCode,
+      } as ApiError;
+    }
+  }
+  return {
+    code: "HTTP_" + result.statusCode,
+    message: "服务暂时不可用（" + result.statusCode + "）",
+    retryable: result.statusCode >= 500 || result.statusCode === 429,
+    requestId: result.requestId,
+    httpStatus: result.statusCode,
+  } as ApiError;
+}

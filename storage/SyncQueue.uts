@@ -1,0 +1,99 @@
+/**
+ * 待同步队列：按家长账号隔离的离线操作队列（尝试上传 + 打卡提交）。
+ * 登录过期时队列保留，重新认证后只归属原账号；切换账号不能自动上传
+ * 旧儿童录音（产品需求第6节）。队列整体以 JSON 持久化到设备存储，
+ * 条目 ID 稳定，重试只改状态不新建条目。
+ */
+import { LocalAttempt, PendingCheckIn } from "./StorageTypes";
+
+export type SyncQueueData = {
+  accountId: string;
+  attempts: LocalAttempt[];
+  checkIns: PendingCheckIn[];
+};
+
+function storageKeyFor(accountId: string): string {
+  return "sprout.syncQueue." + accountId;
+}
+
+export class SyncQueue {
+  private accountId: string;
+  private storageGet: (key: string) => string | null;
+  private storageSet: (key: string, value: string) => void;
+  private data: SyncQueueData;
+
+  constructor(
+    accountId: string,
+    storageGet: (key: string) => string | null,
+    storageSet: (key: string, value: string) => void,
+  ) {
+    this.accountId = accountId;
+    this.storageGet = storageGet;
+    this.storageSet = storageSet;
+    this.data = { accountId: accountId, attempts: [], checkIns: [] } as SyncQueueData;
+  }
+
+  /** 加载持久化队列；损坏内容按空队列处理并保留原字符串供诊断。 */
+  load(): void {
+    const raw = this.storageGet(storageKeyFor(this.accountId));
+    if (raw == null) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as SyncQueueData;
+      if (parsed.accountId === this.accountId) {
+        this.data = parsed;
+      }
+    } catch (e) {
+      console.error("syncQueue corrupted for account " + this.accountId);
+    }
+  }
+
+  private persist(): void {
+    this.storageSet(storageKeyFor(this.accountId), JSON.stringify(this.data));
+  }
+
+  enqueueAttempt(attempt: LocalAttempt): void {
+    this.removeAttempt(attempt.clientAttemptId);
+    this.data.attempts.push(attempt);
+    this.persist();
+  }
+
+  enqueueCheckIn(checkIn: PendingCheckIn): void {
+    this.data.checkIns = this.data.checkIns.filter(
+      (item) => item.clientCompletionId !== checkIn.clientCompletionId);
+    this.data.checkIns.push(checkIn);
+    this.persist();
+  }
+
+  listPendingAttempts(): LocalAttempt[] {
+    return this.data.attempts.filter(
+      (item) => item.state === "queued" || item.state === "failed");
+  }
+
+  listPendingCheckIns(): PendingCheckIn[] {
+    return this.data.checkIns.filter(
+      (item) => item.state === "queued" || item.state === "failed");
+  }
+
+  updateAttempt(attempt: LocalAttempt): void {
+    this.enqueueAttempt(attempt);
+  }
+
+  removeAttempt(clientAttemptId: string): void {
+    this.data.attempts = this.data.attempts.filter(
+      (item) => item.clientAttemptId !== clientAttemptId);
+    this.persist();
+  }
+
+  removeCheckIn(clientCompletionId: string): void {
+    this.data.checkIns = this.data.checkIns.filter(
+      (item) => item.clientCompletionId !== clientCompletionId);
+    this.persist();
+  }
+
+  /** 仅用于诊断统计；不用于授权或身份判断。 */
+  pendingCount(): number {
+    return this.listPendingAttempts().length + this.listPendingCheckIns().length;
+  }
+}
