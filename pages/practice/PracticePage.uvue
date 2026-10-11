@@ -13,6 +13,7 @@
       <RecorderPanel
         :state="recorderState"
         :durationMs="durationMs"
+        :errorMessage="recorderError"
         :theme="theme"
         @start="onStartRecord"
         @stop="onStopRecord"
@@ -93,6 +94,7 @@ export default {
       session: null as PracticeSession | null,
       currentItem: null as PracticeItemView | null,
       recorderState: "idle" as RecorderState,
+      recorderError: "",
       durationMs: 0,
       recordStartedAt: 0,
       durationTimer: 0,
@@ -160,7 +162,9 @@ export default {
       this.hasRecording = item != null && item.attempt != null;
       this.recorderState = snapshot.state === "recording"
         ? "recording"
-        : (this.hasRecording ? "recorded" : "idle");
+        : (snapshot.state === "error" ? "error"
+          : (this.hasRecording ? "recorded" : "idle"));
+      this.recorderError = snapshot.errorMessage;
       if (snapshot.state === "completing") {
         session.completePlan();
         this.finished = true;

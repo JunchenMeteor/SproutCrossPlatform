@@ -63,7 +63,7 @@ export default {
   components: { AppButton, AppDialog },
   data() {
     return {
-      theme: null as ResolvedTheme | null,
+      theme: getThemeStore().getTheme() as ResolvedTheme | null,
       confirmOpen: false,
       pendingCount: 0,
     };

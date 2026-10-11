@@ -38,6 +38,7 @@ export class PracticeSession {
   private state: SessionState = "loading";
   private currentIndex: number = 0;
   private changeCallback: SessionChangeCallback | null = null;
+  private errorMessage: string = "";
 
   constructor(recorder: RecorderAdapter, files: FileAdapter, drafts: DraftStore,
     queue: SyncQueue, newId: IdGenerator, now: Clock) {
@@ -55,7 +56,9 @@ export class PracticeSession {
       this.onRecordingFinished(result);
     });
     this.recorder.onError((error) => {
+      /* 录音错误必须呈现给页面（原因+可恢复），不能静默回到 idle。 */
       this.state = "error";
+      this.errorMessage = error.message;
       this.notifyChange();
     });
   }
@@ -86,7 +89,7 @@ export class PracticeSession {
       plan: this.plan,
       currentIndex: this.currentIndex,
       recordingDurationMs: 0,
-      errorMessage: "",
+      errorMessage: this.errorMessage,
     } as SessionSnapshot;
   }
 

@@ -41,7 +41,7 @@ import { ResolvedTheme } from "../../theme/ThemeTypes";
 export default {
   components: { AppButton, RewardCard },
   data() {
-    return { theme: null as ResolvedTheme | null };
+    return { theme: getThemeStore().getTheme() as ResolvedTheme | null };
   },
   onShow() {
     this.theme = getThemeStore().getTheme();

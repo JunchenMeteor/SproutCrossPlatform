@@ -40,7 +40,7 @@ export default {
   components: { CalendarGrid },
   data() {
     return {
-      theme: null as ResolvedTheme | null,
+      theme: getThemeStore().getTheme() as ResolvedTheme | null,
       monthKey: "",
       weeks: [] as CalendarCellView[][],
       selected: null as string | null,
