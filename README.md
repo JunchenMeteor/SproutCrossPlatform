@@ -1,6 +1,7 @@
-# EnglishCheckInCrossPlatform
+# SproutCrossPlatform
 
-英语练习打卡 uni-app x 跨端客户端仓库，覆盖微信小程序、Web、Android、原生 HarmonyOS NEXT。
+英语练习打卡 uni-app x 跨端客户端仓库（Sprout 系列：后端 SproutApi），
+覆盖微信小程序、Web、Android、原生 HarmonyOS NEXT。
 技术方向固定 uni-app x / UTS / uvue，不使用 Taro、React Native 或其他框架替代。
 
 状态：仓库初始化阶段，工具链与四端编译尚未验证。真实进度、验证证据、未完成项与断点续跑

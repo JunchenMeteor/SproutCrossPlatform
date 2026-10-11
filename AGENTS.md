@@ -1,4 +1,4 @@
-# EnglishCheckInCrossPlatform 仓库根引导
+# SproutCrossPlatform 仓库根引导
 
 模板来源：Codex/EnglishCheckInPlanning/RepositoryGuides/CrossPlatform/AGENTS.md（模板1.0），
 已按 README 的 docs 映射重写阅读链接。本仓库是 uni-app x 跨端客户端本地 Git 仓库，

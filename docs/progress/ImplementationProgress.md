@@ -8,7 +8,7 @@
 
 | 领域 | 状态 | 证据/说明 |
 | --- | --- | --- |
-| 仓库初始化 | 已完成 | 本地 Git 仓库 G:/开发测试/Projects/EnglishCheckInCrossPlatform，main 分支 |
+| 仓库初始化 | 已完成 | 本地 Git 仓库 G:/开发测试/Projects/SproutCrossPlatform，main 分支；2026-10-11 按用户命名规则由 EnglishCheckInCrossPlatform 改名（后端为 SproutApi） |
 | 文档分发 | 已完成 | docs/planning 5 份 + docs/standards 2 份，链接已重写；版本/哈希见 docs/DOCUMENT-SNAPSHOTS.md |
 | 根 README/AGENTS | 已完成 | AGENTS.md 由跨端模板1.0映射，行数 <200 |
 | uni-app x 工程骨架 | 已建立（未编译） | manifest.json/pages.json/main.uts/App.uvue + 8 个页面骨架；HBuilderX 缺失，编译未验证 |
