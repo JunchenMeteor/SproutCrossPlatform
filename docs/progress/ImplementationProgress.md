@@ -39,7 +39,7 @@
 | 平台 | 编译 | 运行/录音 | 权限/文件 | 登录 | 离线/主题/布局 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 微信小程序 | ✅ 编译通过（HBuilderX 5.26，8页面+10组件，样式隔离2.0） | 未验证（需微信开发者工具，本机未安装） | 未验证 | 未验证 | 未验证 | 运行/录音/权限验证受阻：无微信开发者工具 |
-| Web | ✅ 编译通过（HBuilderX 5.26.2026091802，uni-app x VDOM） | ✅ 运行+录音开始已验：页面渲染、路由、tabBar、主题即时切换（晴空蓝→午夜晴空）、MediaRecorder 录音启动与真实计时、recording.active 配色生效 | 浏览器麦克风授权成功 | N/A（登录未定） | 主题切换/离线切换已验 | 截图证据 docs/progress/evidence/web-*.png；录音激活后自动化点击超时（工具限制），停止/回放/提交待人工或他法复验 |
+| Web | ✅ 编译通过（HBuilderX 5.26.2026091802，uni-app x VDOM） | ✅ 运行已验：8 页渲染、路由、tabBar、主题即时切换与设备持久化（晴空蓝/午夜晴空两态截图）、MediaRecorder 录音启动+真实计时+recording.active 明/暗配色、离线队列真实入队（草稿 demo-repeat-1 queued 在记录详情可见） | 浏览器麦克风授权成功 | N/A（登录未定） | 主题切换/离线队列已验 | 截图 docs/progress/evidence/web-*.png；录音激活时自动化点击派发超时（工具限制，页面 JS 正常），停止/回放/提交待人工复验 |
 | Android | ✅ Kotlin 编译通过（HBuilderX 5.26，VDOM，compile-only） | 未验证（无设备/模拟器） | 未验证 | 未验证 | 未验证 | 编译期修复9处真实跨端问题（UTS类型/API差异）；运行需 Android 设备 |
 | HarmonyOS NEXT（原生） | ❌ 受阻：HBuilderX 报“未检测到鸿蒙工具链”，需 DevEco Studio | 未验证 | 未验证 | 未验证 | 未验证 | 需 DevEco Studio + 鸿蒙设备/模拟器；不得以 Android APK 代替（证据 harmony-compile-1.log） |
 
