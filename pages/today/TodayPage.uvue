@@ -1,0 +1,24 @@
+<template>
+  <view class="page">
+    <text class="title">今日练习</text>
+    <text class="body">每日三入口：学了新内容 / 复习旧内容 / 没上课或不清楚（待实现）</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 今日练习页（tab）。仅组合业务状态与共用组件：三入口、当日计划摘要、
+ * 进入练习。新课推进必须由家长确认，页面不自动判定下一课已学。
+ */
+export default {
+  data() {
+    return { title: "今日练习" };
+  }
+};
+</script>
+
+<style>
+.page { flex: 1; padding: 16px; }
+.title { font-size: 28px; margin-bottom: 12px; }
+.body { font-size: 17px; }
+</style>

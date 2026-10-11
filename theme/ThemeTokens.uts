@@ -1,0 +1,131 @@
+/**
+ * 十套主题基础色表与明暗组合解析。
+ * 色值逐字来自 docs/standards/ProjectEngineeringStandard.md 第6节，不得在本文件
+ * 修改色值；如需调整必须先更新项目规范再同步本表。L/D 固定组合规则同样源于该节。
+ */
+import {
+  ButtonTokens,
+  CalendarTokens,
+  DisabledTokens,
+  ProgressTokens,
+  RecordingTokens,
+  ResolvedTheme,
+  RewardTokens,
+  RoleTokens,
+  StateLayerTokens,
+  StatusSetTokens,
+  SurfaceTokens,
+  ThemeDefinition,
+  ThemeGroupKey,
+  ThemeMode,
+} from "./ThemeTypes";
+
+export const themeDefinitions: ThemeDefinition[] = [
+  { id: "SkyLight", group: "sky", mode: "light", displayName: "晴空蓝",
+    base: { accent: "#87CEFA", page: "#FAF8F3", card: "#FFFFFF", elevated: "#FFFFFF", input: "#F0F3F8" } },
+  { id: "SkyDark", group: "sky", mode: "dark", displayName: "午夜晴空",
+    base: { accent: "#87CEFA", page: "#101827", card: "#192338", elevated: "#22304A", input: "#141E30" } },
+  { id: "MistLight", group: "mist", mode: "light", displayName: "雾蓝晨光",
+    base: { accent: "#B8D4F0", page: "#F7F9FC", card: "#FFFFFF", elevated: "#FFFFFF", input: "#EEF3F9" } },
+  { id: "MistDark", group: "mist", mode: "dark", displayName: "深海星光",
+    base: { accent: "#8BAAF5", page: "#111A30", card: "#1B2740", elevated: "#25324D", input: "#152139" } },
+  { id: "LavenderLight", group: "lavender", mode: "light", displayName: "薰衣草",
+    base: { accent: "#C4B5FD", page: "#FAF8FF", card: "#FFFFFF", elevated: "#FFFFFF", input: "#F1EDFA" } },
+  { id: "LavenderDark", group: "lavender", mode: "dark", displayName: "紫夜银河",
+    base: { accent: "#B9A0FF", page: "#1B162A", card: "#272038", elevated: "#332944", input: "#201B31" } },
+  { id: "PeachLight", group: "peach", mode: "light", displayName: "蜜桃奶油",
+    base: { accent: "#FDBA9A", page: "#FFF8F2", card: "#FFFFFF", elevated: "#FFFFFF", input: "#F9EEE5" } },
+  { id: "PeachDark", group: "peach", mode: "dark", displayName: "琥珀夜色",
+    base: { accent: "#F2BB67", page: "#211B16", card: "#30271F", elevated: "#3C3026", input: "#29211B" } },
+  { id: "LemonLight", group: "lemon", mode: "light", displayName: "柠檬晴日",
+    base: { accent: "#F4D96B", page: "#FFFCF1", card: "#FFFFFF", elevated: "#FFFFFF", input: "#F5F0DC" } },
+  { id: "LemonDark", group: "lemon", mode: "dark", displayName: "石墨冰蓝",
+    base: { accent: "#A7C7E7", page: "#181C22", card: "#252B33", elevated: "#303741", input: "#1F252D" } },
+];
+
+export function findThemeDefinition(group: ThemeGroupKey, mode: ThemeMode): ThemeDefinition {
+  for (const def of themeDefinitions) {
+    if (def.group === group && def.mode === mode) {
+      return def;
+    }
+  }
+  return themeDefinitions[0];
+}
+
+function buildRoleTokens(dark: boolean): RoleTokens {
+  if (dark) {
+    return { primary: "#F2F5FC", secondary: "#D1D9E8", tertiary: "#AAB8CD" } as RoleTokens;
+  }
+  return { primary: "#14243B", secondary: "#405168", tertiary: "#526078" } as RoleTokens;
+}
+
+function buildStatusSetTokens(dark: boolean): StatusSetTokens {
+  if (dark) {
+    return {
+      success: { bg: "#14392A", fg: "#A6E7C4", icon: "#A6E7C4" },
+      warning: { bg: "#3D3015", fg: "#F7D58A", icon: "#F7D58A" },
+      error: { bg: "#40202A", fg: "#FFB4C0", icon: "#FFB4C0" },
+      info: { bg: "#1B304C", fg: "#B8D4F0", icon: "#B8D4F0" },
+    } as StatusSetTokens;
+  }
+  return {
+    success: { bg: "#E8F5EE", fg: "#145238", icon: "#145238" },
+    warning: { bg: "#FFF0CF", fg: "#624300", icon: "#624300" },
+    error: { bg: "#FDECEF", fg: "#8B2034", icon: "#8B2034" },
+    info: { bg: "#EAF2FC", fg: "#244F85", icon: "#244F85" },
+  } as StatusSetTokens;
+}
+
+/** 解析完整主题：十套 base + 明暗固定组合规则，不缓存旧计算结果。 */
+export function resolveTheme(def: ThemeDefinition): ResolvedTheme {
+  const dark = def.mode === "dark";
+  const text = buildRoleTokens(dark);
+  const icon = buildRoleTokens(dark);
+  const border = dark ? "#AAB8CD" : "#526078";
+  const surface = { page: def.base.page, card: def.base.card,
+    elevated: def.base.elevated, input: def.base.input } as SurfaceTokens;
+  const button = { primaryBg: def.base.accent, primaryFg: "#14243B",
+    primaryBorder: dark ? "#AAB8CD" : "#14243B",
+    secondaryBg: def.base.card, secondaryFg: text.primary,
+    secondaryBorder: border } as ButtonTokens;
+  const hover = { bg: def.base.input, fg: text.primary, border: border } as StateLayerTokens;
+  const pressed = { bg: def.base.input, fg: text.primary,
+    border: dark ? "#F2F5FC" : "#14243B" } as StateLayerTokens;
+  const disabled = { bg: dark ? "#2A3446" : "#E4E7ED", fg: border,
+    icon: border, border: border } as DisabledTokens;
+  const status = buildStatusSetTokens(dark);
+  const recording = { activeBg: status.error.bg, activeFg: status.error.fg,
+    activeIcon: status.error.icon, activeBorder: status.error.fg,
+    idleBg: def.base.input, idleFg: text.primary, idleBorder: border } as RecordingTokens;
+  const progress = { track: def.base.input, fill: dark ? def.base.accent : "#244F85",
+    border: border, label: text.primary } as ProgressTokens;
+  const calendar = { cellBg: def.base.card, cellFg: text.primary } as CalendarTokens;
+  const reward = { surface: def.base.card, title: text.primary,
+    subtitle: text.secondary } as RewardTokens;
+  return {
+    accent: def.base.accent,
+    surface: surface,
+    text: text,
+    icon: icon,
+    button: button,
+    link: dark ? "#B8D4F0" : "#244F85",
+    highlightBg: def.base.accent,
+    highlightFg: "#14243B",
+    selectionBg: def.base.accent,
+    selectionFg: "#14243B",
+    selectionBorder: "#14243B",
+    focusBorder: dark ? def.base.accent : "#244F85",
+    hover: hover,
+    pressed: pressed,
+    disabled: disabled,
+    border: border,
+    divider: border,
+    scrim: "#00000080",
+    shadow: dark ? "#00000066" : "#14243B26",
+    status: status,
+    recording: recording,
+    progress: progress,
+    calendar: calendar,
+    reward: reward,
+  } as ResolvedTheme;
+}

@@ -1,0 +1,25 @@
+<template>
+  <view class="page">
+    <text class="title">收藏馆</text>
+    <text class="body">已解锁坦克详情与未解锁剪影（待实现）</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 收藏馆页（tab）。完整坦克/零件徽章/涂装展台三层级；未解锁显示剪影与
+ * 下一目标。卡片含型号、年代、国家与简短工程特点；素材须许可记录，
+ * 不提供武器操作内容。
+ */
+export default {
+  data() {
+    return { title: "收藏馆" };
+  }
+};
+</script>
+
+<style>
+.page { flex: 1; padding: 16px; }
+.title { font-size: 28px; margin-bottom: 12px; }
+.body { font-size: 17px; }
+</style>

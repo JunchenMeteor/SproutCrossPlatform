@@ -1,0 +1,97 @@
+/**
+ * 主题偏好状态：group/mode 的加载、校验、持久化与当前主题解析。
+ * 持久化与系统深浅色探测通过构造函数注入（组合根由 platform/ adapter 提供），
+ * 本类型不直接访问 uni API，保持纯逻辑可测试。偏好按设备保存，断网可切，
+ * 不同步到服务器，也不进入 EC-API-0.1 业务数据。
+ */
+import {
+  ResolvedTheme,
+  ThemeDefinition,
+  ThemeGroupKey,
+  ThemeMode,
+  ThemeModePreference,
+} from "./ThemeTypes";
+import { findThemeDefinition, resolveTheme } from "./ThemeTokens";
+
+const storageKeyGroup = "themeGroup";
+const storageKeyMode = "themeMode";
+
+export type ThemePreference = {
+  group: ThemeGroupKey;
+  mode: ThemeModePreference;
+};
+
+function parseGroup(value: string | null): ThemeGroupKey | null {
+  if (value === "sky" || value === "mist" || value === "lavender"
+    || value === "peach" || value === "lemon") {
+    return value as ThemeGroupKey;
+  }
+  return null;
+}
+
+function parseMode(value: string | null): ThemeModePreference | null {
+  if (value === "system" || value === "light" || value === "dark") {
+    return value as ThemeModePreference;
+  }
+  return null;
+}
+
+export class ThemeStore {
+  private preference: ThemePreference = { group: "sky", mode: "system" };
+  private storageGet: (key: string) => string | null;
+  private storageSet: (key: string, value: string) => void;
+  private isSystemDark: () => boolean;
+
+  constructor(
+    storageGet: (key: string) => string | null,
+    storageSet: (key: string, value: string) => void,
+    isSystemDark: () => boolean,
+  ) {
+    this.storageGet = storageGet;
+    this.storageSet = storageSet;
+    this.isSystemDark = isSystemDark;
+  }
+
+  /** 从设备存储恢复偏好；非法或缺失值回退默认 sky/system。 */
+  load(): void {
+    const group = parseGroup(this.storageGet(storageKeyGroup));
+    const mode = parseMode(this.storageGet(storageKeyMode));
+    if (group != null) {
+      this.preference.group = group;
+    }
+    if (mode != null) {
+      this.preference.mode = mode;
+    }
+  }
+
+  getPreference(): ThemePreference {
+    return this.preference;
+  }
+
+  setGroup(group: ThemeGroupKey): void {
+    this.preference = { group: group, mode: this.preference.mode };
+    this.storageSet(storageKeyGroup, group);
+  }
+
+  setMode(mode: ThemeModePreference): void {
+    this.preference = { group: this.preference.group, mode: mode };
+    this.storageSet(storageKeyMode, mode);
+  }
+
+  /** system 模式按注入的系统探测结果解析，其余模式直接生效。 */
+  getEffectiveMode(): ThemeMode {
+    if (this.preference.mode === "system") {
+      return this.isSystemDark() ? "dark" : "light";
+    }
+    return this.preference.mode;
+  }
+
+  getDefinition(): ThemeDefinition {
+    return findThemeDefinition(this.preference.group, this.getEffectiveMode());
+  }
+
+  /** 每次调用按当前偏好重新解析，主题切换不依赖旧缓存。 */
+  getTheme(): ResolvedTheme {
+    return resolveTheme(this.getDefinition());
+  }
+}

@@ -1,0 +1,23 @@
+/**
+ * 主题相关平台能力 adapter：设备存储读写与系统深浅色探测。
+ * uni.getStorageSync / uni.setStorageSync 为跨端存储 API，四端可用性以实测为准。
+ * 系统深浅色字段在各端不统一：当前读取 systemInfo.theme，取不到时保守按浅色处理，
+ * 用户仍可在主题设置页手动切换；各端实际字段须在平台验证阶段核对并回填。
+ */
+export function getStorageValue(key: string): string | null {
+  const value = uni.getStorageSync(key);
+  if (typeof value === "string" && (value as string).length > 0) {
+    return value as string;
+  }
+  return null;
+}
+
+export function setStorageValue(key: string, value: string): void {
+  uni.setStorageSync(key, value);
+}
+
+export function isSystemDarkMode(): boolean {
+  const info = uni.getSystemInfoSync();
+  const theme = (info as any)["theme"];
+  return theme === "dark";
+}

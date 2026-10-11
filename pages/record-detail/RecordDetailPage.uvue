@@ -1,0 +1,25 @@
+<template>
+  <view class="page">
+    <text class="title">记录详情</text>
+    <text class="body">录音回放与文字反馈（待实现）</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 记录详情页。录音可用时支持回放并展示反馈；录音已按策略删除时明确说明，
+ * 保留的文字反馈仍可查看。家长可查看词/音素细节、原话与改写、供应商与
+ * 任务状态；无真实返回的细节不展示伪造数据。
+ */
+export default {
+  data() {
+    return { title: "记录详情" };
+  }
+};
+</script>
+
+<style>
+.page { flex: 1; padding: 16px; }
+.title { font-size: 28px; margin-bottom: 12px; }
+.body { font-size: 17px; }
+</style>

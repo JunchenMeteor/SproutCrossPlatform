@@ -1,0 +1,25 @@
+<template>
+  <view class="page">
+    <text class="title">日历</text>
+    <text class="body">打卡日历与记录入口（待实现）</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 日历页（tab）。目标日期/确认时间/补卡标记来自服务端契约数据，
+ * 客户端不自行计算连续天数与奖励；补卡日期保持“补”标记（图形+文字，
+ * 不仅颜色区分）。
+ */
+export default {
+  data() {
+    return { title: "日历" };
+  }
+};
+</script>
+
+<style>
+.page { flex: 1; padding: 16px; }
+.title { font-size: 28px; margin-bottom: 12px; }
+.body { font-size: 17px; }
+</style>

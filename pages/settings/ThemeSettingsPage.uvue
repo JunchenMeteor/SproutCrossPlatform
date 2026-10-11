@@ -1,0 +1,25 @@
+<template>
+  <view class="page">
+    <text class="title">主题设置</text>
+    <text class="body">五配色组 × system/light/dark（待实现）</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 主题设置页。五配色组（sky/mist/lavender/peach/lemon）与三模式选择，
+ * 按设备保存、断网可切；切换后已打开弹层与页面同步更新。
+ * 默认 sky/system（暖白浅蓝 B / 午夜晴空）。
+ */
+export default {
+  data() {
+    return { title: "主题设置" };
+  }
+};
+</script>
+
+<style>
+.page { flex: 1; padding: 16px; }
+.title { font-size: 28px; margin-bottom: 12px; }
+.body { font-size: 17px; }
+</style>

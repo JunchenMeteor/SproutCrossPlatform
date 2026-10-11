@@ -1,0 +1,53 @@
+{
+  "pages": [
+    {
+      "path": "pages/today/TodayPage",
+      "style": { "navigationBarTitleText": "今日练习" }
+    },
+    {
+      "path": "pages/calendar/CalendarPage",
+      "style": { "navigationBarTitleText": "日历" }
+    },
+    {
+      "path": "pages/collection/CollectionPage",
+      "style": { "navigationBarTitleText": "收藏馆" }
+    },
+    {
+      "path": "pages/parent/ParentPage",
+      "style": { "navigationBarTitleText": "家长管理" }
+    },
+    {
+      "path": "pages/practice/PracticePage",
+      "style": { "navigationBarTitleText": "练习" }
+    },
+    {
+      "path": "pages/complete/CompletePage",
+      "style": { "navigationBarTitleText": "完成" }
+    },
+    {
+      "path": "pages/record-detail/RecordDetailPage",
+      "style": { "navigationBarTitleText": "记录详情" }
+    },
+    {
+      "path": "pages/settings/ThemeSettingsPage",
+      "style": { "navigationBarTitleText": "主题设置" }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTitleText": "英语练习打卡",
+    "navigationBarBackgroundColor": "#FAF8F3",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FAF8F3"
+  },
+  "tabBar": {
+    "color": "#526078",
+    "selectedColor": "#14243B",
+    "backgroundColor": "#FFFFFF",
+    "list": [
+      { "pagePath": "pages/today/TodayPage", "text": "练习" },
+      { "pagePath": "pages/calendar/CalendarPage", "text": "日历" },
+      { "pagePath": "pages/collection/CollectionPage", "text": "收藏馆" },
+      { "pagePath": "pages/parent/ParentPage", "text": "家长" }
+    ]
+  }
+}

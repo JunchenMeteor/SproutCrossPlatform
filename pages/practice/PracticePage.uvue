@@ -1,0 +1,25 @@
+<template>
+  <view class="page">
+    <text class="title">练习题</text>
+    <text class="body">听示范 → 按键录音 → 回放/重录/提交 → 一个关键改进点（待实现）</text>
+  </view>
+</template>
+
+<script lang="uts">
+/**
+ * 练习题页。组合 Recorder/Feedback 组件与练习用例状态；录音、回放、权限
+ * 经 platform adapter 注入，页面不写平台条件。跟读显示参考句，自由表达显示
+ * 主题提示；不诱导儿童提供真实姓名、学校、位置。
+ */
+export default {
+  data() {
+    return { title: "练习题" };
+  }
+};
+</script>
+
+<style>
+.page { flex: 1; padding: 16px; }
+.title { font-size: 28px; margin-bottom: 12px; }
+.body { font-size: 17px; }
+</style>

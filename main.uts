@@ -1,0 +1,11 @@
+/**
+ * 应用入口：创建并返回 App 实例。
+ * 依赖注入与启动初始化集中在 App.uvue（组合根），本文件不含业务逻辑。
+ */
+import { createSSRApp } from "vue";
+import App from "./App.uvue";
+
+export function createApp() {
+  const app = createSSRApp(App);
+  return { app };
+}

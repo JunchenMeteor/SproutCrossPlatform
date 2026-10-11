@@ -11,8 +11,8 @@
 | 仓库初始化 | 已完成 | 本地 Git 仓库 G:/开发测试/Projects/EnglishCheckInCrossPlatform，main 分支 |
 | 文档分发 | 已完成 | docs/planning 5 份 + docs/standards 2 份，链接已重写；版本/哈希见 docs/DOCUMENT-SNAPSHOTS.md |
 | 根 README/AGENTS | 已完成 | AGENTS.md 由跨端模板1.0映射，行数 <200 |
-| uni-app x 工程骨架 | 进行中 | 目录结构建立中；编译未验证 |
-| 主题系统（十套） | 未开始 | tokens 唯一来源：项目规范第6节 |
+| uni-app x 工程骨架 | 已建立（未编译） | manifest.json/pages.json/main.uts/App.uvue + 8 个页面骨架；HBuilderX 缺失，编译未验证 |
+| 主题系统（十套） | 源码完成（未编译） | theme/ThemeTypes.uts + ThemeTokens.uts + ThemeStore.uts；99 个色值字面量与项目规范第6节逐一核对一致（脚本比对，无多出/缺失）；UI 实际渲染未验证 |
 | 共用组件 | 未开始 | button/dialog/toast/form/list/card/recorder/feedback/calendar/reward |
 | 网络层 | 未开始 | EC-API-0.1 + ClientContext headers；接口未冻结，不自行定义远端接口 |
 | 平台 adapter | 未开始 | 录音/播放/文件/权限/登录/主题存储 |
@@ -61,7 +61,11 @@
 
 ## 6. 断点续跑
 
-- 上次完成：仓库初始化、文档分发与链接重写、根 README/AGENTS、本进度文件建立。
-- 下次入口：搭建 uni-app x 工程骨架（manifest.json/pages.json/App.uvue/main.uts）与
-  theme/ tokens 映射；随后逐层实现 platform adapter、共用组件、storage/services、页面。
+- 上次完成：uni-app x 工程骨架（manifest/pages.json/main.uts/App.uvue/8 页面骨架）、
+  主题系统源码（ThemeTypes/ThemeTokens/ThemeStore + ThemeEnvAdapter），色值核对通过。
+- 下次入口：platform/ 录音/播放/文件/权限 adapter → components/ 共用组件 →
+  storage/ 草稿与待同步队列 → services/ RequestClient 骨架 → 页面业务组合。
 - 续跑前先读 AGENTS.md 阅读顺序与本文件第5节未完成项。
+- 待核对：manifest.json 平台段键名（app/app-harmony/h5）需对照所装 HBuilderX 版本
+  校验；pages.json tabBar 为静态默认 SkyLight 配色，运行时主题只覆盖页面内容，
+  小程序 tabBar 动态换肤能力需在验证阶段确认。

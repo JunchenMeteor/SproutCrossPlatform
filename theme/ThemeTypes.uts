@@ -1,0 +1,134 @@
+/**
+ * 主题系统类型定义。
+ * 语义 token 唯一权威来源：docs/standards/ProjectEngineeringStandard.md 第6节。
+ * 主题 ID（SkyLight 等）为稳定协议值 UpperCamelCase；设备存储 group 键为
+ * lowerCamelCase（sky/mist/lavender/peach/lemon），mode 为 system/light/dark。
+ * 叶子属性保持规范中的 camelCase 名称（textPrimary → text.primary 的分组映射）。
+ */
+
+export type ThemeMode = "light" | "dark";
+
+export type ThemeModePreference = "system" | "light" | "dark";
+
+export type ThemeGroupKey = "sky" | "mist" | "lavender" | "peach" | "lemon";
+
+/** 每套主题独立定义的表面色与 accent；其余 token 由明暗组合规则派生。 */
+export type ThemeBaseColors = {
+  accent: string;
+  page: string;
+  card: string;
+  elevated: string;
+  input: string;
+};
+
+export type ThemeDefinition = {
+  id: string;
+  group: ThemeGroupKey;
+  mode: ThemeMode;
+  displayName: string;
+  base: ThemeBaseColors;
+};
+
+export type RoleTokens = {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+};
+
+export type SurfaceTokens = {
+  page: string;
+  card: string;
+  elevated: string;
+  input: string;
+};
+
+export type ButtonTokens = {
+  primaryBg: string;
+  primaryFg: string;
+  primaryBorder: string;
+  secondaryBg: string;
+  secondaryFg: string;
+  secondaryBorder: string;
+};
+
+export type StateLayerTokens = {
+  bg: string;
+  fg: string;
+  border: string;
+};
+
+export type DisabledTokens = {
+  bg: string;
+  fg: string;
+  icon: string;
+  border: string;
+};
+
+export type StatusTokens = {
+  bg: string;
+  fg: string;
+  icon: string;
+};
+
+export type StatusSetTokens = {
+  success: StatusTokens;
+  warning: StatusTokens;
+  error: StatusTokens;
+  info: StatusTokens;
+};
+
+export type RecordingTokens = {
+  activeBg: string;
+  activeFg: string;
+  activeIcon: string;
+  activeBorder: string;
+  idleBg: string;
+  idleFg: string;
+  idleBorder: string;
+};
+
+export type ProgressTokens = {
+  track: string;
+  fill: string;
+  border: string;
+  label: string;
+};
+
+export type CalendarTokens = {
+  cellBg: string;
+  cellFg: string;
+};
+
+export type RewardTokens = {
+  surface: string;
+  title: string;
+  subtitle: string;
+};
+
+/** 完整解析后的主题；组件只消费本类型，不读取原始表。 */
+export type ResolvedTheme = {
+  accent: string;
+  surface: SurfaceTokens;
+  text: RoleTokens;
+  icon: RoleTokens;
+  button: ButtonTokens;
+  link: string;
+  highlightBg: string;
+  highlightFg: string;
+  selectionBg: string;
+  selectionFg: string;
+  selectionBorder: string;
+  focusBorder: string;
+  hover: StateLayerTokens;
+  pressed: StateLayerTokens;
+  disabled: DisabledTokens;
+  border: string;
+  divider: string;
+  scrim: string;
+  shadow: string;
+  status: StatusSetTokens;
+  recording: RecordingTokens;
+  progress: ProgressTokens;
+  calendar: CalendarTokens;
+  reward: RewardTokens;
+};
