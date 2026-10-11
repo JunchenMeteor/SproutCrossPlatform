@@ -17,7 +17,7 @@ export function setStorageValue(key: string, value: string): void {
 }
 
 export function isSystemDarkMode(): boolean {
-  const info = uni.getSystemInfoSync();
-  const theme = (info as any)["theme"];
-  return theme === "dark";
+  /* uni-app x 拆分系统信息 API；osTheme 取不到时按浅色处理（d.ts 核对）。 */
+  const theme = uni.getDeviceInfo().osTheme;
+  return theme != null && theme === "dark";
 }

@@ -42,7 +42,7 @@ export default {
     return {
       theme: null as ResolvedTheme | null,
       monthKey: "",
-      weeks: [] as CalendarCellView[],
+      weeks: [] as CalendarCellView[][],
       selected: null as string | null,
       pendingCount: 0,
     };
@@ -51,7 +51,9 @@ export default {
     this.theme = getThemeStore().getTheme();
     const today = todayTargetDate();
     this.monthKey = today.substring(0, 7);
-    const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+    const queue = new SyncQueue(localDevAccountId,
+        (key: string): string | null => getStorageValue(key),
+        (key: string, value: string): void => setStorageValue(key, value));
     queue.load();
     const pendingDates: string[] = [];
     for (const checkIn of queue.listPendingCheckIns()) {
@@ -83,7 +85,9 @@ export default {
     onSelect(date: string): void {
       this.selected = date;
       const today = todayTargetDate();
-      const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+      const queue = new SyncQueue(localDevAccountId,
+        (key: string): string | null => getStorageValue(key),
+        (key: string, value: string): void => setStorageValue(key, value));
       queue.load();
       const pendingDates: string[] = [];
       for (const checkIn of queue.listPendingCheckIns()) {

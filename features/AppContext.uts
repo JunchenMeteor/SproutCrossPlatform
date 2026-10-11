@@ -1,7 +1,8 @@
 /**
- * 组合根访问器：页面经此取得 App 级共享实例（ThemeStore 等）。
- * App.uvue onLaunch 为唯一组合根；本模块只做读取与懒初始化兜底，
- * 不在页面层新建全局可变服务。登录方式未定前使用明示的本机开发身份
+ * 组合根访问器：uni-app x 不提供 getApp().globalData（本地 d.ts 核对无此
+ * API），官方示例采用模块级 store 共享。本模块为唯一组合根入口：
+ * App.uvue onLaunch 调用 initAppContext() 完成构建；页面经 getThemeStore()
+ * 读取，不自行新建全局可变服务。登录方式未定前使用明示的本机开发身份
  * （local-dev / local-child），不得用于生产或正式联调验收。
  */
 import { ThemeStore } from "../theme/ThemeStore";
@@ -15,13 +16,26 @@ export const localDevAccountId = "local-dev";
 
 export const localDevChildId = "local-child";
 
-export function getThemeStore(): ThemeStore {
-  const app = getApp();
-  let store = app.globalData["themeStore"] as ThemeStore | null;
-  if (store == null) {
-    store = new ThemeStore(getStorageValue, setStorageValue, isSystemDarkMode);
-    store.load();
-    app.globalData["themeStore"] = store;
-  }
+let themeStoreInstance: ThemeStore | null = null;
+
+function buildThemeStore(): ThemeStore {
+  const store = new ThemeStore(
+    (key: string): string | null => getStorageValue(key),
+    (key: string, value: string): void => setStorageValue(key, value),
+    (): boolean => isSystemDarkMode(),
+  );
+  store.load();
   return store;
+}
+
+/** 组合根初始化；重复调用不重建（幂等）。 */
+export function initAppContext(): void {
+  if (themeStoreInstance == null) {
+    themeStoreInstance = buildThemeStore();
+  }
+}
+
+export function getThemeStore(): ThemeStore {
+  initAppContext();
+  return themeStoreInstance as ThemeStore;
 }

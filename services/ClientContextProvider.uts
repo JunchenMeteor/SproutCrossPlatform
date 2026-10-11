@@ -42,7 +42,7 @@ export function newUuid(): string {
   const pattern = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
   let result = "";
   for (let i = 0; i < pattern.length; i++) {
-    const c = pattern[i];
+    const c = pattern.substring(i, i + 1);
     if (c === "x" || c === "y") {
       const r = Math.floor(Math.random() * 16);
       const v = c === "x" ? r : (r % 4) + 8;
@@ -88,7 +88,7 @@ export class ClientContextProvider {
     return null;
     // #endif
     // #ifndef H5
-    const info = uni.getSystemInfoSync();
+    const info = uni.getDeviceInfo();
     const name = info.osName ?? "";
     const version = info.osVersion ?? "";
     if (name.length > 0 && version.length > 0) {

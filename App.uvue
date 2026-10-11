@@ -4,25 +4,19 @@
  * 页面与组件通过注入/共享的 ThemeStore 消费主题，不硬编码颜色；
  * 录音、文件、权限、登录等平台能力经 platform/ adapter 注入。
  */
-import { ThemeStore } from "./theme/ThemeStore";
-import { getStorageValue, setStorageValue, isSystemDarkMode } from "./platform/ThemeEnvAdapter";
+import { getThemeStore, initAppContext } from "./features/AppContext";
 
 export default {
   onLaunch: function () {
-    const themeStore = new ThemeStore(getStorageValue, setStorageValue, isSystemDarkMode);
-    themeStore.load();
-    console.log("onLaunch theme=" + themeStore.getTheme().surface.page);
+    initAppContext();
+    console.log("onLaunch theme=" + getThemeStore().getTheme().surface.page);
   }
 };
 </script>
 
 <style>
 /*
- * 启动期静态兜底背景：主题加载前使用默认 SkyLight page 值。
- * 运行时各页面根节点以 ThemeStore 当前主题覆盖背景与文字色。
+ * uvue 仅支持类选择器，不使用 page 选择器。各页面根节点通过
+ * ThemeStore 当前主题绑定背景与文字色，启动期无全局硬编码底色。
  */
-page {
-  background-color: #FAF8F3;
-  color: #14243B;
-}
 </style>

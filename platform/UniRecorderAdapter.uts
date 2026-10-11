@@ -36,9 +36,9 @@ export class UniRecorderAdapter implements RecorderAdapter {
       return;
     }
     manager.onStop((res) => {
-      const durationMs = res.duration > 0
-        ? Math.round(res.duration)
-        : Date.now() - this.startedAtMs;
+      /* uni-app x 的 onStop 结果只有 tempFilePath（本地 d.ts 核对），
+         时长用真实会话 elapsed 计算。 */
+      const durationMs = Date.now() - this.startedAtMs;
       this.setState("recorded");
       const callback = this.resultCallback;
       if (callback != null) {

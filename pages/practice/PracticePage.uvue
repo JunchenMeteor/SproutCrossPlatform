@@ -27,6 +27,7 @@
         <AppButton
           label="提交，下一题"
           kind="primary"
+          class="action-space"
           :theme="theme"
           @action="onSubmitNext"
         />
@@ -102,9 +103,13 @@ export default {
   },
   onLoad() {
     this.theme = getThemeStore().getTheme();
-    const queue = new SyncQueue(localDevAccountId, getStorageValue, setStorageValue);
+    const queue = new SyncQueue(localDevAccountId,
+        (key: string): string | null => getStorageValue(key),
+        (key: string, value: string): void => setStorageValue(key, value));
     queue.load();
-    const drafts = new DraftStore(getStorageValue, setStorageValue,
+    const drafts = new DraftStore(
+        (key: string): string | null => getStorageValue(key),
+        (key: string, value: string): void => setStorageValue(key, value),
       (key: string) => uni.removeStorageSync(key));
     const session = new PracticeSession(
       createRecorderAdapter(), createFileAdapter(), drafts, queue,
@@ -237,7 +242,9 @@ export default {
 .actions {
   flex-direction: row;
   justify-content: center;
-  gap: 12px;
   margin-top: 16px;
+}
+.action-space {
+  margin-left: 12px;
 }
 </style>

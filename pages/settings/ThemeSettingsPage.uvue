@@ -38,6 +38,7 @@
 import { getThemeStore } from "../../features/AppContext";
 import {
   ResolvedTheme,
+  RoleTokens,
   ThemeGroupKey,
   ThemeModePreference,
 } from "../../theme/ThemeTypes";
@@ -98,10 +99,10 @@ export default {
     },
   },
   methods: {
-    themeText(): { primary: string; secondary: string; tertiary: string } {
+    themeText(): RoleTokens {
       const t = this.theme;
       if (t == null) {
-        return { primary: "", secondary: "", tertiary: "" };
+        return { primary: "", secondary: "", tertiary: "" } as RoleTokens;
       }
       return t.text;
     },

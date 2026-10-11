@@ -17,6 +17,9 @@ const binaryExtensions = new Set([
   ".wav", ".mp4", ".ttf", ".woff", ".woff2", ".zip",
 ]);
 const skipDirs = new Set([".git", "node_modules", "unpackage", "dist"]);
+/* 具名排除：docs/progress/evidence/*.log 为工具原始输出捕获（非手写文本），
+   保留原字节不做规范化。 */
+const skipPattern = /docs[\/\\]progress[\/\\]evidence[\/\\].*\.log$/;
 
 function walk(dir) {
   const out = [];
@@ -29,7 +32,7 @@ function walk(dir) {
     } else {
       const dot = name.lastIndexOf(".");
       const ext = dot >= 0 ? name.slice(dot).toLowerCase() : "";
-      if (!binaryExtensions.has(ext)) {
+      if (!binaryExtensions.has(ext) && !skipPattern.test(full)) {
         out.push(full);
       }
     }

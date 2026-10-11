@@ -1,6 +1,6 @@
 <template>
   <view class="calendar">
-    <view class="calendar-row" v-for="(week, weekIndex) in weeks" :key="weekIndex">
+    <view class="calendar-row" v-for="(week, weekIndex) in typedWeeks" :key="weekIndex">
       <view
         v-for="(cell, dayIndex) in week"
         :key="dayIndex"
@@ -21,15 +21,22 @@
  * 完成、补卡、选中、今天均有图形或文字标识，不仅颜色区分（补卡显示“补”）。
  * 日期与连续天数数据由服务端契约提供，组件不自行计算连续链。
  */
-import { CalendarCellViewView } from "../features/FeatureTypes";
+import { CalendarCellView } from "../features/FeatureTypes";
 import { ResolvedTheme } from "../theme/ThemeTypes";
 
 export default {
   props: {
-    weeks: { type: Array as PropType<CalendarCellView[]>, default: [] },
+    weeks: { type: Array as PropType<CalendarCellView[][]>, default: [] },
     theme: { type: Object as PropType<ResolvedTheme>, required: true },
   },
   emits: ["select"],
+  computed: {
+    /* Android(Kotlin) 下 props 运行时为 Any?，经显式类型化计算属性
+       供模板 v-for 迭代，避免 Any? 传入强类型方法。 */
+    typedWeeks(): CalendarCellView[][] {
+      return this.weeks as CalendarCellView[][];
+    },
+  },
   methods: {
     cellStyle(cell: CalendarCellView): string {
       const t = this.theme as ResolvedTheme;

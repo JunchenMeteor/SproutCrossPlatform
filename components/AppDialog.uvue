@@ -16,6 +16,7 @@
         <AppButton
           :label="confirmLabel"
           kind="primary"
+          class="action-space"
           :theme="theme"
           @action="onConfirm"
         />
@@ -104,6 +105,8 @@ export default {
 .dialog-actions {
   flex-direction: row;
   justify-content: flex-end;
-  gap: 12px;
+}
+.action-space {
+  margin-left: 12px;
 }
 </style>

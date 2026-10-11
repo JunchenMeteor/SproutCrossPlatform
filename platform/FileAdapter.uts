@@ -28,20 +28,22 @@ export function createFileAdapter(): FileAdapter {
 class UniFileAdapter implements FileAdapter {
   persistRecording(result: RecordingResult): Promise<StoredFileRef> {
     return new Promise<StoredFileRef>((resolve, reject) => {
-      uni.saveFile({
-        tempFilePath: result.tempFilePath,
-        success: (res) => {
-          resolve({
-            localId: newLocalId(),
-            persistedPath: res.savedFilePath,
-            originTempPath: result.tempFilePath,
-            sizeBytes: result.sizeBytes,
-            sha256: "",
-            createdAt: new Date().toISOString(),
-          } as StoredFileRef);
-        },
-        fail: (err) => reject(err),
-      });
+      try {
+        /* uni-app x 无 uni.saveFile；FileSystemManager.saveFileSync 自 4.71 起
+           返回 unifile:// 持久路径（本地类型定义核对）。 */
+        const savedPath = uni.getFileSystemManager()
+          .saveFileSync(result.tempFilePath, null);
+        resolve({
+          localId: newLocalId(),
+          persistedPath: savedPath,
+          originTempPath: result.tempFilePath,
+          sizeBytes: result.sizeBytes,
+          sha256: "",
+          createdAt: new Date().toISOString(),
+        } as StoredFileRef);
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 

@@ -9,15 +9,13 @@ import { PermissionStatus } from "./PlatformTypes";
 export function requestRecordPermission(): Promise<PermissionStatus> {
   return new Promise<PermissionStatus>((resolve) => {
     // #ifdef MP-WEIXIN
-    uni.authorize({
-      scope: "scope.record",
-      success: () => resolve("granted"),
-      fail: () => resolve("denied"),
-    });
+    /* uni-app x 无 uni.authorize；小程序在首次 RecorderManager.start 时触发
+       系统授权弹窗。此处报告 undetermined，拒绝时由 recorder error 回调呈现。 */
+    resolve("undetermined");
     // #endif
     // #ifdef APP
-    uni.requestPermission({
-      permission: "android.permission.RECORD_AUDIO",
+    uni.requestSystemPermission({
+      permissions: ["android.permission.RECORD_AUDIO"],
       success: () => resolve("granted"),
       fail: () => resolve("denied"),
     });
