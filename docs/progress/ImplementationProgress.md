@@ -73,6 +73,13 @@
 6. 编码门禁流水线（formatter→空行归一→custom checker→lint/测试）未实现，当前为人工遵守。
 7. 后端联调（依赖 EC-API-0.1 冻结与后端仓库）。
 
+## 5.1 受阻项与解除条件（2026-10-12）
+
+| 受阻项 | 具体限制 | 已尝试的自主路径 | 解除条件 |
+| --- | --- | --- | --- |
+| 小程序录音复测（模拟器） | 微信开发者工具 2.02 服务端口关闭；GUI 自动化对该实例输入无效（激活/点击/键盘/任务计划启动/HBuilderX 拉起/cli --port 均试） | cli open/auto、--port 冷启动、任务计划非提权启动、AttachThreadInput/mouse_event 注入、HBuilderX launch 联动 | 用户手动：工具右上角 齿轮→安全→开“服务端口”（3 次点击） |
+| 鸿蒙运行验证 | 本机无 Hyper-V（HyperVisorPresent=False），DevEco 模拟器不可用 | AEHD 方案仅适用于 Android 模拟器 | 鸿蒙真机 USB 连接（我来装包运行） |
+
 ## 6. 断点续跑
 
 - 上次完成：features 业务用例层与核心页面接线（今日/练习/完成/主题设置），
