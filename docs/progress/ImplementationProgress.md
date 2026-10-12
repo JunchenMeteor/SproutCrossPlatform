@@ -78,15 +78,17 @@
 | 受阻项 | 具体限制 | 已尝试的自主路径 | 解除条件 |
 | --- | --- | --- | --- |
 | 小程序录音复测（模拟器） | 微信开发者工具 2.02 服务端口关闭；GUI 自动化对该实例输入无效（激活/点击/键盘/任务计划启动/HBuilderX 拉起/cli --port 均试） | cli open/auto、--port 冷启动、任务计划非提权启动、AttachThreadInput/mouse_event 注入、HBuilderX launch 联动 | 用户手动：工具右上角 齿轮→安全→开“服务端口”（3 次点击） |
-| 鸿蒙运行验证 | 本机无 Hyper-V（HyperVisorPresent=False），DevEco 模拟器不可用 | AEHD 方案仅适用于 Android 模拟器 | 鸿蒙真机 USB 连接（我来装包运行） |
+| 鸿蒙运行验证 | HyperVisorPlatform + VirtualMachinePlatform 已用 DISM 提权开启（2026-10-12，log hyperv-enable.log），**待重启生效** | AEHD 方案仅适用于 Android 模拟器 | 重启后用 DevEco 模拟器或鸿蒙真机验证 |
 
 ## 6. 断点续跑
 
 - 上次完成：features 业务用例层与核心页面接线（今日/练习/完成/主题设置），
   演示 fixture 全流程可走通（未编译运行）。
-- 下次入口：用户开启微信开发者工具服务端口后，复测小程序录音链路；
-  鸿蒙运行验证需真机（本机无 Hyper-V，DevEco 模拟器不可用，Android 用
-  AEHD 已解决）；小程序真机预览需注册 AppID。
+- 下次入口（重启后）：微信开发者工具服务端口已开（2.02 实例端口 15498），
+  小程序录音复测已完成（启动/计时/错误呈现）；鸿蒙运行验证：DevEco
+  Device Manager 建模拟器或接鸿蒙真机，HBuilderX launch app-harmony
+  （工程路径须 ASCII：G:\HarmonyBuilds\SproutCrossPlatform 镜像）。
+  小程序真机预览需注册 AppID。
 - 环境备忘：HBuilderX/DevEco/微信开发者工具/模拟器都在本机跑着；Android
   AVD 名 sprout（wipe-data 后稳定）。
 - 微信开发者工具 2026-10-12 自动升级 2.01.2510260 → 2.02.2608080，新配置
