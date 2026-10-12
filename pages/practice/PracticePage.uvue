@@ -195,6 +195,8 @@ export default {
       }
     },
     onSubmitNext(): void {
+      /* 提交后必须停止计时器并归零时长，否则旧计时会带进下一题。 */
+      this.stopDurationTimer();
       this.hasRecording = false;
       this.durationMs = 0;
       this.session?.moveNext();
