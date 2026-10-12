@@ -40,7 +40,7 @@
 
 | 平台 | 编译 | 运行/录音 | 权限/文件 | 登录 | 离线/主题/布局 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 微信小程序 | ✅ 编译通过（HBuilderX 5.26，8页面+10组件，样式隔离2.0） | ✅ 模拟器运行已验：今日/练习页渲染、tabBar、路由、跳过流程（moveNext 生效）；页面 theme 需 data 初始化（onShow 过晚已修复） | 录音点击无状态变化：模拟器无麦克风授权弹窗，疑模拟器限制；真机待验 | N/A | 未验 | 微信开发者工具 2.01.2510260 游客模式；证据 mp-*.png；录音错误已补呈现（不再静默回 idle） |
+| 微信小程序 | ✅ 编译通过 | ✅ 模拟器运行已验：今日/练习页渲染、tabBar、路由、跳过；**录音启动+计时+recording.active 配色+停止后错误呈现均可见** | 录音文件格式：模拟器官方限制（工具内格式与移动端不同，仅工具内调试播放）→ 真机待验 | N/A | 未验 | 工具已自动升级 2.02.2608080，服务端口已开（15498）；证据 mp-recording-active.png / mp-recorder-error-shown.png |
 | Web | ✅ 编译通过（HBuilderX 5.26.2026091802，uni-app x VDOM） | ✅ 运行已验：8 页渲染、路由、tabBar、主题即时切换与设备持久化（晴空蓝/午夜晴空两态截图）、MediaRecorder 录音启动+真实计时+recording.active 明/暗配色、离线队列真实入队（草稿 demo-repeat-1 queued 在记录详情可见） | 浏览器麦克风授权成功 | N/A（登录未定） | 主题切换/离线队列已验 | 截图 docs/progress/evidence/web-*.png；全流程复测通过（2026-10-12）：录音→停止→回放→提交→第二题 0:00→第三题跳过→完成页（pending 奖励诚实提示）→记录详情两题 queued 草稿；早前超时判定为环境瞬态 |
 | Android | ✅ Kotlin 编译通过 | ✅ 模拟器运行已验（2026-10-12）：启动/onLaunch/渲染/路由/录音权限弹窗/真实录音计时/停止/回放触发/提交换题/时长归零修复验证 | 系统录音权限弹窗→授权→录音成功 | N/A | 未验 | Android SDK 34 + AEHD 2.2 模拟器（pixel_6, emulator-5554）；截图 android-*.png；syncQueue 旧数据 corruption 按设计降级空队列（已记录） |
 | HarmonyOS NEXT（原生） | ✅ 原生鸿蒙编译链通过（2026-10-12）：uni-app x 编译→鸿蒙工程生成→依赖安装→entry-default-unsigned.hap（15.8MB）制作成功，DevEco 26.0.0.851 | 未验证（无鸿蒙设备/模拟器） | 未验证 | 未验证 | 未验证 | 中文路径限制：鸿蒙工具链不接受中文工程路径，经 G:\HarmonyBuilds ASCII 镜像编译（证据 harmony-compile-3.log）；运行需鸿蒙模拟器/真机+签名 |
