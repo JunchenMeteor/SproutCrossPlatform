@@ -27,7 +27,9 @@
 | --- | --- | --- |
 | Node.js | v24.18.0 可用（C:\Program Files\nodejs） | 可用于脚本与依赖管理 |
 | Git | 2.46.0.windows.1 可用 | 本地仓库正常 |
-| HBuilderX | ✅ 5.26.2026091802 便携版已部署于 Tools/HBuilderX（官方 release.json 校验，89.56MB zip 字节数一致）；cli.exe 可用 | uni-app x 无独立 CLI 脚手架（官方问答 2026-09 确认仅 HBuilderX）；已通过 cli project open 导入本仓库 |
+| HBuilderX | ✅ 5.26.2026091802 便携版（Tools/HBuilderX），cli.exe 可用；运行配置已写入 DevEco/微信开发者工具路径 | uni-app x 无独立 CLI 脚手架；鸿蒙编译需 ASCII 工程路径（镜像到 G:\HarmonyBuilds\SproutCrossPlatform） |
+| 微信开发者工具 | ✅ 2.01.2510260 已安装（Tools/WechatDevtools/app），游客模式，服务端口 50530 已开 | 真机预览/发布需注册小程序 AppID（manifest mp-weixin.appid 待填） |
+| DevEco Studio | ✅ 26.0.0.851 已装至 G:\DevEcoStudio（安装器拒中文路径，工作区外 ASCII 为例外） | 鸿蒙运行需模拟器/真机与签名证书 |
 | 微信开发者工具 | 未核对 | 小程序预览/真机验证需要 |
 | Android SDK / 鸿蒙 DevEco | 未核对 | Android 与原生 HarmonyOS NEXT 验证需要；鸿蒙须独立验证，APK 不作证据 |
 
@@ -41,7 +43,7 @@
 | 微信小程序 | ✅ 编译通过（HBuilderX 5.26，8页面+10组件，样式隔离2.0） | ✅ 模拟器运行已验：今日/练习页渲染、tabBar、路由、跳过流程（moveNext 生效）；页面 theme 需 data 初始化（onShow 过晚已修复） | 录音点击无状态变化：模拟器无麦克风授权弹窗，疑模拟器限制；真机待验 | N/A | 未验 | 微信开发者工具 2.01.2510260 游客模式；证据 mp-*.png；录音错误已补呈现（不再静默回 idle） |
 | Web | ✅ 编译通过（HBuilderX 5.26.2026091802，uni-app x VDOM） | ✅ 运行已验：8 页渲染、路由、tabBar、主题即时切换与设备持久化（晴空蓝/午夜晴空两态截图）、MediaRecorder 录音启动+真实计时+recording.active 明/暗配色、离线队列真实入队（草稿 demo-repeat-1 queued 在记录详情可见） | 浏览器麦克风授权成功 | N/A（登录未定） | 主题切换/离线队列已验 | 截图 docs/progress/evidence/web-*.png；录音激活时自动化点击派发超时（工具限制，页面 JS 正常），停止/回放/提交待人工复验 |
 | Android | ✅ Kotlin 编译通过（HBuilderX 5.26，VDOM，compile-only） | 未验证（无设备/模拟器） | 未验证 | 未验证 | 未验证 | 编译期修复9处真实跨端问题（UTS类型/API差异）；运行需 Android 设备 |
-| HarmonyOS NEXT（原生） | 进行中：DevEco Studio 26.0.0.851 已下载（3.1GB，用户已登录华为账号）解压配置中 | 未验证 | 未验证 | 未验证 | 未验证 | 还需鸿蒙模拟器/真机；不得以 Android APK 代替 |
+| HarmonyOS NEXT（原生） | ✅ 原生鸿蒙编译链通过（2026-10-12）：uni-app x 编译→鸿蒙工程生成→依赖安装→entry-default-unsigned.hap（15.8MB）制作成功，DevEco 26.0.0.851 | 未验证（无鸿蒙设备/模拟器） | 未验证 | 未验证 | 未验证 | 中文路径限制：鸿蒙工具链不接受中文工程路径，经 G:\HarmonyBuilds ASCII 镜像编译（证据 harmony-compile-3.log）；运行需鸿蒙模拟器/真机+签名 |
 
 ## 4. 契约与接口边界
 
