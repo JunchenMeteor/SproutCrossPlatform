@@ -78,7 +78,7 @@
 | 受阻项 | 具体限制 | 已尝试的自主路径 | 解除条件 |
 | --- | --- | --- | --- |
 | 小程序录音复测（模拟器） | 微信开发者工具 2.02 服务端口关闭；GUI 自动化对该实例输入无效（激活/点击/键盘/任务计划启动/HBuilderX 拉起/cli --port 均试） | cli open/auto、--port 冷启动、任务计划非提权启动、AttachThreadInput/mouse_event 注入、HBuilderX launch 联动 | 用户手动：工具右上角 齿轮→安全→开“服务端口”（3 次点击） |
-| 鸿蒙运行验证 | 进行中受阻（2026-10-13 凌晨实测）：模拟器 Huawei_TripleFold 已建并连上 hdc（127.0.0.1:5555），但 1.5 小时内三次启动均停在 HarmonyOS logo 不动；内核日志在推进但每次启动 image 签名校验耗时 2.5 分钟+，param 服务始终未就绪（errNum 1002），shell 可通；已尝试热/冷启动、ram 快照清理均无效 | TripleFold 三屏镜像疑似过重 | 下一步：换轻量手机镜像（Mate 90 单屏）或鸿蒙真机；DevEco SDK/镜像已迁至 G:\\DevEcoSdk（junction 无感知） |
+| 鸿蒙运行验证 | 受阻（2026-10-13 凌晨实测，2h+）：DevEco 启动的 TripleFold 能到 logo 但 1.5h 未完成引导（HDD I/O 慢，镜像签名校验 2.5 分钟级）；迁至 SSD（H:\\HarmonyEmu）后手动启动卡在镜像校验前（LocalSocket/参数空警告），Mate_90 手建配置同样卡住——手动启动缺 DevEco 会话管道参数 | 模拟器启动依赖 DevEco Device Manager 会话 | 解除：DevEco → Device Manager 里点模拟器启动按钮（GUI 自动化对该版本输入失效，需手动），起来后我装包验证；或鸿蒙真机 USB |
 
 ## 6. 断点续跑
 
