@@ -81,8 +81,10 @@
   鸿蒙运行验证需真机（本机无 Hyper-V，DevEco 模拟器不可用，Android 用
   AEHD 已解决）；小程序真机预览需注册 AppID。
 - 环境备忘：HBuilderX/DevEco/微信开发者工具/模拟器都在本机跑着；Android
-  AVD 名 sprout（wipe-data 后稳定）；微信开发者工具服务端口需每次重启
-  IDE 后确认开启。
+  AVD 名 sprout（wipe-data 后稳定）。
+- 微信开发者工具 2026-10-12 自动升级 2.01.2510260 → 2.02.2608080，新配置
+  目录导致服务端口开关丢失；新实例以管理员权限运行，GUI 自动化无法输入
+  （UIPI），服务端口需用户手动在 设置→安全 重新开启。
 - 续跑前先读 AGENTS.md 阅读顺序与本文件第5节未完成项。
 - 待核对：manifest.json 平台段键名（app/app-harmony/h5）需对照所装 HBuilderX 版本
   校验；pages.json tabBar 为静态默认 SkyLight 配色，运行时主题只覆盖页面内容，
