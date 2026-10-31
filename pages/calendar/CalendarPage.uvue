@@ -1,13 +1,29 @@
 <template>
   <view class="page" :style="pageStyle">
-    <text class="title" :style="titleStyle">{{ monthKey }}</text>
-    <CalendarGrid
-      :weeks="weeks"
-      :theme="theme"
-      @select="onSelect"
-    />
+    <view class="head">
+      <text class="kicker" :style="kickerStyle">打卡日历</text>
+      <text class="title" :style="titleStyle">{{ monthKey }}</text>
+    </view>
+    <view class="calendar-card" :style="cardStyle">
+      <CalendarGrid
+        :weeks="weeks"
+        :theme="theme"
+        @select="onSelect"
+      />
+    </view>
     <view class="legend">
-      <text :style="legendStyle">绿底 = 已完成；蓝底 + “补” = 补卡；外圈 = 今天</text>
+      <view class="legend-item">
+        <view class="dot dot-done" :style="doneDotStyle" />
+        <text :style="legendStyle">已完成</text>
+      </view>
+      <view class="legend-item">
+        <view class="dot dot-makeup" :style="makeupDotStyle" />
+        <text :style="legendStyle">补卡</text>
+      </view>
+      <view class="legend-item">
+        <view class="dot dot-today" :style="todayDotStyle" />
+        <text :style="legendStyle">今天</text>
+      </view>
     </view>
     <text v-if="pendingCount > 0" :style="hintStyle">
       {{ pendingCount }} 条本地记录待联网确认；连续天数与累计由服务器确认后显示
@@ -76,6 +92,28 @@ export default {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.secondary + ";font-size:14px;";
     },
+    kickerStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary +
+          ";font-size:12px;letter-spacing:0.1em;";
+    },
+    cardStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.card +
+          ";border-color:" + t.border + ";";
+    },
+    doneDotStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.status.success.icon + ";";
+    },
+    makeupDotStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.button.primaryBg + ";";
+    },
+    todayDotStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "border-color:" + t.focusBorder + ";";
+    },
     hintStyle(): string {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.tertiary + ";";
@@ -103,14 +141,50 @@ export default {
 <style>
 .page {
   flex: 1;
-  padding: 16px;
+  padding: 20px 18px;
+}
+.head {
+  margin-bottom: 16px;
+}
+.kicker {
+  font-size: 12px;
+  margin-bottom: 6px;
 }
 .title {
   font-size: 28px;
-  margin-bottom: 16px;
+}
+.calendar-card {
+  padding: 14px;
+  border-radius: 22px;
+  border-width: 1px;
+  border-style: solid;
 }
 .legend {
+  flex-direction: row;
+  align-items: center;
   margin-top: 16px;
   margin-bottom: 8px;
+}
+.legend-item {
+  flex-direction: row;
+  align-items: center;
+  margin-right: 18px;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  margin-right: 6px;
+}
+.dot-done {
+  background-color: #4F9D69;
+}
+.dot-makeup {
+  background-color: #87CEFA;
+}
+.dot-today {
+  border-width: 2px;
+  border-style: solid;
+  background-color: transparent;
 }
 </style>

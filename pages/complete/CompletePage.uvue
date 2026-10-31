@@ -1,14 +1,16 @@
 <template>
   <view class="page" :style="pageStyle">
-    <text class="title" :style="titleStyle">今天的基础练习完成了！</text>
-    <text :style="bodyStyle">具体表扬和奖励确认后展示；反馈未完成不影响打卡。</text>
+    <view class="head">
+      <text class="kicker" :style="kickerStyle">今日打卡</text>
+      <text class="title" :style="titleStyle">练完了，今天算数</text>
+    </view>
+    <text class="body" :style="bodyStyle">具体表扬和奖励确认后展示；反馈未完成不影响打卡。</text>
     <RewardCard
       state="pending"
       title="今日收藏零件"
       :confirmed="false"
       :theme="theme"
     />
-    <text :style="infoStyle">已在这台设备保存，联网后确认</text>
     <AppButton
       label="再玩一关"
       kind="secondary"
@@ -54,6 +56,11 @@ export default {
     titleStyle(): string {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.primary + ";";
+    },
+    kickerStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary +
+          ";font-size:12px;letter-spacing:0.1em;";
     },
     bodyStyle(): string {
       const t = this.theme;
