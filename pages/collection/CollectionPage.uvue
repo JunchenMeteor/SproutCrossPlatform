@@ -1,6 +1,10 @@
 <template>
   <view class="page" :style="pageStyle">
-    <text class="title" :style="titleStyle">坦克收藏馆</text>
+    <view class="head">
+      <text class="kicker" :style="kickerStyle">收集进度</text>
+      <text class="title" :style="titleStyle">坦克收藏馆</text>
+      <text class="count" :style="hintStyle">已解锁 {{ unlockedCount }} / {{ items.length }}</text>
+    </view>
     <text class="hint" :style="hintStyle">演示内容：素材与历史型号确认前使用原创示例</text>
     <scroll-view class="scroll" scroll-y>
       <RewardCard
@@ -52,7 +56,15 @@ export default {
     },
     hintStyle(): string {
       const t = this.theme;
-      return t == null ? "" : "color:" + t.text.tertiary + ";font-size:14px;margin-bottom:16px;";
+      return t == null ? "" : "color:" + t.text.tertiary + ";font-size:14px;margin-bottom:14px;";
+    },
+    kickerStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary +
+          ";font-size:12px;letter-spacing:0.1em;";
+    },
+    unlockedCount(): number {
+      return this.items.filter((item: CollectionItemView): boolean => item.unlocked).length;
     },
   },
 };
@@ -61,11 +73,22 @@ export default {
 <style>
 .page {
   flex: 1;
-  padding: 16px;
+  padding: 20px 18px;
+}
+.head {
+  margin-bottom: 8px;
+}
+.kicker {
+  font-size: 12px;
+  margin-bottom: 6px;
 }
 .title {
   font-size: 28px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+}
+.count {
+  font-size: 13px;
+  margin-bottom: 12px;
 }
 .scroll {
   flex: 1;

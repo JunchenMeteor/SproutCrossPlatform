@@ -1,6 +1,9 @@
 <template>
   <view class="page" :style="pageStyle">
-    <text class="title" :style="titleStyle">家长管理</text>
+    <view class="head">
+      <text class="kicker" :style="kickerStyle">设置与说明</text>
+      <text class="title" :style="titleStyle">家长管理</text>
+    </view>
     <AppCard :theme="theme" class="section">
       <text :style="sectionTitleStyle">当前身份</text>
       <text :style="bodyStyle">本机开发身份（local-dev）。登录与账号恢复方式待确定，未定前仅本机使用，不用于联调验收。</text>
@@ -50,6 +53,11 @@ export default {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.primary + ";";
     },
+    kickerStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary +
+          ";font-size:12px;letter-spacing:0.1em;";
+    },
     sectionTitleStyle(): string {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.primary + ";font-size:22px;margin-bottom:8px;";
@@ -70,7 +78,14 @@ export default {
 <style>
 .page {
   flex: 1;
-  padding: 16px;
+  padding: 20px 18px;
+}
+.head {
+  margin-bottom: 14px;
+}
+.kicker {
+  font-size: 12px;
+  margin-bottom: 6px;
 }
 .title {
   font-size: 28px;
