@@ -28,7 +28,7 @@ export default {
       const t = this.theme as ResolvedTheme;
       const bg = this.elevated ? t.surface.elevated : t.surface.card;
       return "background-color:" + bg + ";border-color:" + t.border
-        + ";padding:" + this.padding + ";";
+        + ";padding:" + this.padding + ";box-shadow:0 6px 18px rgba(20,36,59,0.06);";
     },
   },
   methods: {
