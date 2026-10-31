@@ -4,12 +4,15 @@
       演示内容：教材版本确认前使用原创小样
     </text>
     <view v-if="currentItem != null" class="practice">
-      <text class="prompt" :style="titleStyle">{{ currentItem.prompt }}</text>
-      <text
-        v-if="currentItem.referenceText != null"
-        class="english"
-        :style="englishStyle"
-      >{{ currentItem.referenceText }}</text>
+      <view class="question-card" :style="cardStyle">
+        <text class="kicker" :style="kickerStyle">今日练习</text>
+        <text class="prompt" :style="titleStyle">{{ currentItem.prompt }}</text>
+        <text
+          v-if="currentItem.referenceText != null"
+          class="english"
+          :style="englishStyle"
+        >{{ currentItem.referenceText }}</text>
+      </view>
       <RecorderPanel
         :state="recorderState"
         :durationMs="durationMs"
@@ -134,6 +137,16 @@ export default {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.primary + ";";
     },
+    cardStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.card +
+          ";border-color:" + t.border + ";";
+    },
+    kickerStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary +
+          ";font-size:12px;letter-spacing:0.1em;";
+    },
     englishStyle(): string {
       const t = this.theme;
       return t == null ? "" : "color:" + t.text.primary + ";";
@@ -237,9 +250,20 @@ export default {
 .practice {
   flex: 1;
 }
+.question-card {
+  padding: 20px;
+  border-radius: 22px;
+  border-width: 1px;
+  border-style: solid;
+  margin-bottom: 20px;
+}
+.kicker {
+  font-size: 12px;
+  margin-bottom: 10px;
+}
 .prompt {
-  font-size: 22px;
-  margin-bottom: 12px;
+  font-size: 20px;
+  margin-bottom: 10px;
 }
 .english {
   font-size: 24px;
