@@ -1,13 +1,25 @@
 <template>
   <view class="page" :style="pageStyle">
     <text class="title" :style="titleStyle">今天练什么？</text>
-    <AppButton
-      label="学了新内容"
-      kind="primary"
-      size="large"
-      :theme="theme"
-      @action="onNewLesson"
-    />
+    <text class="eyebrow-note" :style="hintStyle">每天 10 分钟 · 只鼓励，不打分</text>
+
+    <view class="hero-card" :style="cardStyle">
+      <text class="hero-kicker" :style="eyebrowStyle">建议从这里开始</text>
+      <text class="hero-title" :style="titleStyle">开始今天的练习</text>
+      <text class="hero-body" :style="hintStyle">
+        家长确认后，按下一课安排今天的练习。
+      </text>
+      <AppButton
+        label="学了新内容，开始"
+        kind="primary"
+        size="large"
+        :theme="theme"
+        @action="onNewLesson"
+      />
+    </view>
+
+    <text class="section-label" :style="hintStyle">或者</text>
+
     <AppButton
       label="复习旧内容"
       kind="secondary"
@@ -22,10 +34,12 @@
       :theme="theme"
       @action="onUnknown"
     />
+
     <text v-if="pendingCount > 0" class="hint" :style="hintStyle">
       有 {{ pendingCount }} 条记录在这台设备上等待联网确认
     </text>
     <text class="hint" :style="hintStyle">演示内容：教材版本确认前使用原创小样</text>
+
     <AppDialog
       :open="confirmOpen"
       title="家长确认"
@@ -87,7 +101,17 @@ export default {
     },
     hintStyle(): string {
       const t = this.theme;
-      return t == null ? "" : "color:" + t.text.tertiary + ";";
+      return t == null ? "" : "color:" + t.text.tertiary + ";font-size:14px;";
+    },
+    eyebrowStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "color:" + t.text.secondary +
+          ";font-size:12px;letter-spacing:0.12em;";
+    },
+    cardStyle(): string {
+      const t = this.theme;
+      return t == null ? "" : "background-color:" + t.surface.card +
+          ";border-color:" + t.border + ";";
     },
     bodyStyle(): string {
       const t = this.theme;
@@ -118,11 +142,48 @@ export default {
 <style>
 .page {
   flex: 1;
-  padding: 24px 16px;
+  padding: 20px 18px 28px;
+}
+.head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.eyebrow {
+  font-size: 12px;
+}
+.eyebrow-note {
+  font-size: 12px;
 }
 .title {
-  font-size: 28px;
-  margin-bottom: 24px;
+  font-size: 30px;
+  margin-bottom: 18px;
+}
+.hero-card {
+  padding: 20px;
+  border-radius: 22px;
+  border-width: 1px;
+  border-style: solid;
+  margin-bottom: 18px;
+}
+.hero-kicker {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.hero-title {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+.hero-body {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.section-label {
+  font-size: 12px;
+  margin: 4px 0 10px;
 }
 .hint {
   font-size: 14px;
